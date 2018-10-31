@@ -145,7 +145,7 @@ export default {
             // console.log(this.astronObjects)
         },
         registerSocketHandlers(socket){
-            socket.on("connect", this.init)
+            socket.once("connect", this.init)
             socket.on("get_astron_object_data_handler", this.getAstronObjectData)
         },
         onChange(newGeoLocation, newTime){
