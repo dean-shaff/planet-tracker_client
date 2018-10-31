@@ -162,7 +162,6 @@ export default {
                 return this.requestAstronCoordinates(geoLocation)
             }).catch(this.geoLocationError)
         },
-
         reRenderPolarPlot(){
             var width = this.$refs["polar-plot-container"].offsetWidth
             this.polarPlotWidth = width
@@ -213,9 +212,15 @@ export default {
         this.registerSocketHandlers(this.socket)
         this.reRenderPolarPlot()
         window.addEventListener('resize', this.reRenderPolarPlot)
+        window.addEventListener('beforeunload', (evt) => {
+            console.log('beforeunload')
+            evt.preventDefault()
+            evt.returnValue = ''
+            this.socket.close()
+        })
     },
     destroyed(){
-        this.socket.disconnect()
+        this.socket.close()
     },
     data(){
         var planetFill = {

@@ -1,6 +1,6 @@
 {
   "name": "planet-tracker_client",
-  "version": "2.0.2",
+  "version": "2.0.3",
   "description": "Vue.js planet tracker client",
   "main": "app.js",
   "scripts": {
