@@ -196,7 +196,7 @@ export default {
             this.$emit("on-change", this.getGeoLocation(), this.parseDateTime())
         },
         toolTipClass(){
-            console.log('here')
+            // console.log('toolTipClass: watch')
         }
     },
     data() {
