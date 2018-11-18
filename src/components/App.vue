@@ -58,13 +58,9 @@
 </template>
 
 <script>
-
-import io from "socket.io-client"
 import Vue from "vue"
 import moment from "moment"
 
-// import TimeDisplay from "./TimeDisplay.vue"
-// import GeoLocationDisplay from "./GeoLocationDisplay.vue"
 import GeoLocationTimeDisplay from "./GeoLocationTimeDisplay.vue"
 import AstronTextDisplay from "./AstronTextDisplay.vue"
 import D3PolarPlot from "./D3PolarPlot.vue"
@@ -87,22 +83,52 @@ export default {
     methods:{
         init(){
             console.log("App.init")
-            this.requestGeoLocation(
+            return this.requestGeoLocation(
             ).then(this.setGeoLocation
             ).then((geoLocation)=>{
                 this.currentTime = moment.utc()
                 return this.requestAstronCoordinates(geoLocation)
-            }).catch(this.geoLocationError)
+            })
+        },
+        get(url, data){
+            var request = new XMLHttpRequest()
+            if (data !== undefined){
+                url += `?${data}`
+            }
+            // console.log(`get: ${url}`)
+            request.open("GET", url, true)
+            return new Promise((resolve, reject)=>{
+                request.send()
+                request.onreadystatechange = function(){
+                    if (this.readyState === XMLHttpRequest.DONE && this.status === 200) {
+                        resolve(this)
+                    }
+                }
+                request.onerror = reject
+            })
         },
         requestAstronCoordinates(geoLocation){
-            Object.keys(this.astronObjects).forEach((name)=>{
-                this.socket.emit("get_astron_object_data", {
+            var promises = Object.keys(this.astronObjects).map((name)=>{
+                var reqData = {
                     name: name,
                     when: this.currentTime.format(),
-                    cb_name: "get_astron_object_data_handler",
-                    geo_location: Object.assign({}, geoLocation)
+                    lon: geoLocation.lon,
+                    lat: geoLocation.lat,
+                    elevation: geoLocation.elevation
+                }
+                var reqDataUrlArr = Object.keys(reqData).map((c) => {
+                    return `${c}=${reqData[c]}`
+                })
+                console.log(reqDataUrlArr)
+                this.get(
+                    "./get_astron_object_data",
+                    reqDataUrlArr.join("&")
+                ).then((req) => {
+                    var data = JSON.parse(req.response)
+                    this.getAstronObjectData(data)
                 })
             })
+            return Promise.all(promises)
         },
         setGeoLocation(position){
             if ("coords" in position){
@@ -135,6 +161,7 @@ export default {
         getAstronObjectData(data){
             console.log("App.getAstronObjectData")
             var name = data.name
+            console.log(`App.getAstronObjectData: ${name}`)
             var astronObjectsCopy = Object.assign({}, this.astronObjects)
             astronObjectsCopy[name] = data
             this.astronObjects = Object.assign({}, astronObjectsCopy)
@@ -143,10 +170,6 @@ export default {
             // console.log(this.astronObjects)
             // this.astronObjects = Object.assign(this.astronObjects, this.astronObjects[name], data)
             // console.log(this.astronObjects)
-        },
-        registerSocketHandlers(socket){
-            socket.once("connect", this.init)
-            socket.on("get_astron_object_data_handler", this.getAstronObjectData)
         },
         onChange(newGeoLocation, newTime){
             console.log(`App.onChange`)
@@ -206,17 +229,10 @@ export default {
         }
     },
     mounted(){
-        // console.log(this.host, this.port)
-        // this.socket = io(`https://${this.host}:${this.port}`)
-        this.socket = io()
-        this.registerSocketHandlers(this.socket)
         this.reRenderPolarPlot()
         window.addEventListener('resize', this.reRenderPolarPlot)
-        window.addEventListener('beforeunload', (evt) => {
-            console.log('beforeunload')
-            evt.preventDefault()
-            evt.returnValue = ''
-            this.socket.close()
+        this.init().catch((err) => {
+            console.error(`Error: ${err}`)
         })
     },
     destroyed(){

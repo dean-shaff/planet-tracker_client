@@ -1,6 +1,6 @@
 {
   "name": "planet-tracker_client",
-  "version": "2.0.3",
+  "version": "3.0.0",
   "description": "Vue.js planet tracker client",
   "main": "app.js",
   "scripts": {
@@ -27,7 +27,6 @@
     "d3": "^5.6.0",
     "moment": "^2.22.2",
     "octicons": "^8.1.0",
-    "socket.io": "^2.1.1",
     "vue": "^2.5.17"
   },
   "devDependencies": {
