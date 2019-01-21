@@ -18,3 +18,7 @@ particularly bad on mobile.
 ### Version 3.0.0
 
 - Switched back to using HTTPS requests instead of web sockets.
+
+### Version 3.0.1
+
+- Fixed bug where `null` elevation value wouldn't be sent to server.
