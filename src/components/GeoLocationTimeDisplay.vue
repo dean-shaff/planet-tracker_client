@@ -60,7 +60,7 @@
         </div>
         <div class="field field-body is-grouped">
             <div class="control is-expanded ">
-                <input class="input " v-model="lon"/>
+                <input type="number" class="input " v-model="lon"/>
             </div>
         </div>
     </div>
@@ -70,7 +70,7 @@
         </div>
         <div class="field field-body is-grouped">
             <div class="control is-expanded">
-                <input class="input "v-model="lat"/>
+                <input type="number" class="input "v-model="lat"/>
             </div>
         </div>
     </div>
@@ -80,7 +80,7 @@
         </div>
         <div class="field field-body is-grouped">
             <div class="control is-expanded">
-                <input class="input "v-model="elevation"/>
+                <input type="number" class="input "v-model="elevation"/>
             </div>
         </div>
     </div>
@@ -170,7 +170,7 @@ export default {
         }
     },
     mounted(){
-        window.addEventListener('resize', this.onResize)
+        // window.addEventListener('resize', this.onResize)
         this.$nextTick(this.onResize)
     },
     watch: {
