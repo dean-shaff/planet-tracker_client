@@ -133,10 +133,11 @@ export default {
         setGeoLocation(position){
             if ("coords" in position){
                 this.status = "This browser supports geolocation"
+                var altitude = position.coords.altitude
                 this.geoLocation = {
                     lat: position.coords.latitude,
                     lon: position.coords.longitude,
-                    elevation: position.coords.altitude ? null: 0.0
+                    elevation: altitude === null ? 0.0: altitude
                 }
             }else{
                 this.status = "Browser doesn't support geolocation"

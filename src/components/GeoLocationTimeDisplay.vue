@@ -177,7 +177,7 @@ export default {
         geoLocation(){
             this.lat = this.geoLocation.lat
             this.lon = this.geoLocation.lon
-            this.elevation = this.geoLocation.elevation
+            this.elevation = this.geoLocation.elevation 
         },
         time(){
             this.currentTime = this.time.format("HH:mm:ss")

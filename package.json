@@ -1,6 +1,6 @@
 {
   "name": "planet-tracker_client",
-  "version": "3.0.2",
+  "version": "3.0.3",
   "description": "Vue.js planet tracker client",
   "main": "app.js",
   "scripts": {
@@ -20,31 +20,31 @@
   },
   "homepage": "https://github.com/dean-shaff/planet-tracker#readme",
   "dependencies": {
-    "bulma": "^0.7.1",
+    "bulma": "^0.7.5",
     "bulma-divider": "^2.0.1",
     "bulma-slider": "^2.0.0",
     "bulma-tooltip": "^2.0.2",
-    "d3": "^5.6.0",
-    "moment": "^2.22.2",
-    "octicons": "^8.1.0",
-    "vue": "^2.5.17"
+    "d3": "^5.12.0",
+    "moment": "^2.24.0",
+    "octicons": "^8.5.0",
+    "vue": "^2.6.10"
   },
   "devDependencies": {
     "babel-core": "^6.26.3",
     "babel-loader": "^7.1.5",
     "babel-preset-es2015-node5": "^1.2.0",
     "babel-preset-import-export": "^1.0.2",
-    "css-loader": "^1.0.0",
+    "css-loader": "^1.0.1",
     "extract-text-webpack-plugin": "^4.0.0-beta.0",
     "file-loader": "^2.0.0",
-    "mini-css-extract-plugin": "^0.4.2",
-    "node-sass": "^4.9.3",
+    "mini-css-extract-plugin": "^0.4.5",
+    "node-sass": "^4.13.0",
     "null-loader": "^0.1.1",
-    "sass-loader": "^7.1.0",
-    "vue-loader": "^15.4.0",
+    "sass-loader": "^7.3.1",
+    "vue-loader": "^15.7.2",
     "vue-style-loader": "^4.1.2",
-    "vue-template-compiler": "^2.5.17",
-    "webpack": "^4.17.1",
-    "webpack-command": "^0.4.1"
+    "vue-template-compiler": "^2.6.10",
+    "webpack": "^4.41.2",
+    "webpack-command": "^0.4.2"
   }
 }
