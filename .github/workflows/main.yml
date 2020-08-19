@@ -14,10 +14,10 @@ jobs:
         node-version: 12.x
     - name: Build Client
       run: |
+        npm install 
         npm run build:prod
     - name: Push newly built client to Github
       run: |
         git add -u
         git commit -m "Rebuild client" || echo "No changes to commit"
         git push origin ${GITHUB_REF##*/} || echo "No changes to commit"
-    
