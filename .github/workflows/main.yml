@@ -1,5 +1,4 @@
 name: Build on dispatch
-
 on: [push, repository_dispatch]
 
 jobs:
