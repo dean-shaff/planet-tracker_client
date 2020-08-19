@@ -77,6 +77,7 @@ module.exports = {
     },
     watchOptions: {
         ignored: /node_modules/
-    }
+    },
+    stats: 'verbose'
     // devtool:"source-map"
 }

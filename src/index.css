@@ -27,6 +27,14 @@
     padding-bottom: 1rem;
 }
 
-a h1:hover{
+/* a h1:hover{
     color: red;
+} */
+
+a div.red-hover:hover {
+  color: red;
+}
+
+a div.red-hover {
+  color: #4a4a4a;
 }

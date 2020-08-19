@@ -22,3 +22,10 @@ particularly bad on mobile.
 ### Version 3.0.1
 
 - Fixed bug where `null` elevation value wouldn't be sent to server.
+
+### Version 3.1.0
+
+- Put Source link down at the bottom
+- Use local time instead of UTC time in display
+- Get rid of Pluto
+- Get rid of magnitude, add rising time 
