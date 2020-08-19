@@ -28,4 +28,8 @@ particularly bad on mobile.
 - Put Source link down at the bottom
 - Use local time instead of UTC time in display
 - Get rid of Pluto
-- Get rid of magnitude, add rising time 
+- Get rid of magnitude, add rising time
+
+### Version 3.1.1
+
+- Update npm dependencies

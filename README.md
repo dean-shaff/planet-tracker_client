@@ -1,4 +1,4 @@
-## Planet Tracker client v3.0.0
+## Planet Tracker client 3.1.1
 
 [![Build Status](https://travis-ci.org/dean-shaff/planet-tracker_client.svg?branch=master)](https://travis-ci.org/dean-shaff/planet-tracker_client)
 
