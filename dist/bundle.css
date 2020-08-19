@@ -1,11 +1,11 @@
 
 .control span[data-v-70bc95df] {
-    margin-top: 1rem;
+  margin-top: 1rem;
 }
 
 
 .field-label{
-    flex-grow: 2;
+  flex-grow: 2;
 }
 
 /*! bulma.io v0.7.5 | MIT License | github.com/jgthms/bulma */
@@ -10634,7 +10634,15 @@ label.panel-block:hover {
     padding-bottom: 1rem;
 }
 
-a h1:hover{
+/* a h1:hover{
     color: red;
+} */
+
+a div.red-hover:hover {
+  color: red;
+}
+
+a div.red-hover {
+  color: #4a4a4a;
 }
 

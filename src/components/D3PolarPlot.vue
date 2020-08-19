@@ -1,5 +1,5 @@
 <template>
-    <div></div>
+  <div></div>
 </template>
 
 <script>
@@ -9,244 +9,244 @@ import * as d3 from "d3"
 import D3ToolTip from "./D3ToolTip.js"
 
 export default {
-    props: {
-        circles: {type:Array, default:()=>{return []}},
-        circleOptions: {type:Object, default:()=>{return {}}},
-        height: {type:Number, default:300},
-        width: {type:Number, default:300},
-        options: {type:Object, default:()=>{return {ticks:5}}}
+  props: {
+    circles: {type:Array, default:()=>{return []}},
+    circleOptions: {type:Object, default:()=>{return {}}},
+    height: {type:Number, default:300},
+    width: {type:Number, default:300},
+    options: {type:Object, default:()=>{return {ticks:5}}}
+  },
+  mounted: function(){
+    var radius = 0.95*(Math.min(this.elWidth, this.elHeight)/2)
+    var radiusScale = d3.scaleLinear()
+      .domain([90, 0])
+      .range([0, radius])
+    var plot = this.createSVG(this.$el)
+    var radialPlot = this.createRadialPlot(plot, radiusScale)
+    var angularPlot = this.createAngularPlot(plot, radius)
+    var outerCircle = this.createOuterCircle(plot)
+    var [outerArc, largeArc] = this.createOuterArc(plot,radius, 15)
+    this.plot = plot
+    this.scale = radiusScale
+    this.tooltip = new D3ToolTip({class: "d3-tip"})
+    this.tooltipClick = new D3ToolTip({class: "d3-tip"})
+    // this.registerEventHandlers()
+  },
+  methods: {
+    createSVG(mount){
+      var svg = d3.select(mount).append("svg")
+        .attr("width", this.elWidth)
+        .attr("height", this.elHeight)
+        .append("g")
+        .attr("transform", `translate(${this.elWidth/2},${this.elHeight/2})`)
+      return svg.append("g")
     },
-    mounted: function(){
-        var radius = 0.95*(Math.min(this.elWidth, this.elHeight)/2)
-        var radiusScale = d3.scaleLinear()
-            .domain([90, 0])
-            .range([0, radius])
-        var plot = this.createSVG(this.$el)
-        var radialPlot = this.createRadialPlot(plot, radiusScale)
-        var angularPlot = this.createAngularPlot(plot, radius)
-        var outerCircle = this.createOuterCircle(plot)
-        var [outerArc, largeArc] = this.createOuterArc(plot,radius, 15)
-        this.plot = plot
-        this.scale = radiusScale
-        this.tooltip = new D3ToolTip({class: "d3-tip"})
-        this.tooltipClick = new D3ToolTip({class: "d3-tip"})
-        // this.registerEventHandlers()
+    createRadialPlot(plotGroup, scale){
+      var plotRadial = plotGroup.append("g")
+        .attr("class", "r axis")
+        .selectAll("g")
+        .data(scale.ticks(this.options.ticks).slice(1))
+        .enter().append("g")
+
+      plotRadial.append("circle")
+        .style("stroke", "rgba(0,0,0,0.4")
+        .style('fill', 'none')
+        .attr("r", scale)
+
+      plotRadial.append("text")
+        .attr("y", (d)=>{ return - scale(d) - 4; })
+        .attr("transform", "rotate(15)")
+        .style("font-size", "10px")
+        .style("text-anchor", "middle")
+        .text((d)=>{ return d+ "°"; })
+      return plotRadial
     },
-    methods: {
-        createSVG(mount){
-            var svg = d3.select(mount).append("svg")
-                .attr("width", this.elWidth)
-                .attr("height", this.elHeight)
-                .append("g")
-                .attr("transform", `translate(${this.elWidth/2},${this.elHeight/2})`)
-            return svg.append("g")
+    createAngularPlot: function(plotGroup, radius){
+      var plotAngular = plotGroup.append("g")
+        .attr("class", "a axis")
+        .selectAll("g")
+        .data(d3.range(0, 360, 30))
+          .enter().append("g")
+          .attr("transform", (d)=>{return `rotate(${d-90})`});
+
+      plotAngular.append("line")
+        .attr("x2", radius)
+        .style("stroke", "rgba(0,0,0,0.4")
+        .style('fill', 'none')
+
+      plotAngular.append("text")
+        .attr("x", radius+6)
+        .attr("dy", ".35em")
+        .style("font-size", "8px")
+        .style("text-anchor", (d)=>{
+          if (d < 360 && d > 180){
+            return "end" ;
+          }else{
+            return null ;
+          }
+        })
+        .attr("transform", (d)=>{
+          if (d < 360 && d > 180){
+            return `rotate(180 ${radius+6}, 0)`
+          }else {
+            return null ;
+          }
+        })
+        .text((d)=>{ return d + "°"; })
+      return plotAngular
+    },
+
+    createOuterCircle: function(plotGroup, radius){
+      var outerCircle = plotGroup.append('circle')
+        .style("stroke", "rgba(0,0,0,0.4")
+        .style('fill', 'none')
+        .attr('r', radius)
+    },
+
+    createOuterArc: function(plotGroup, radius, tolerance){
+      var largeArc = d3.arc()
+        .innerRadius(radius - tolerance)
+        .outerRadius(radius + tolerance)
+        .startAngle(0)
+        .endAngle(2*Math.PI)
+
+      var outerArc = plotGroup.append('path')
+        .attr('d', largeArc)
+        .attr('id', 'horizon')
+        .style("stroke", "none")
+        .style("fill", "rgba(0,0,0,0.0)")
+      return [outerArc, largeArc]
+    },
+    processPlotOptions: function(kwargs){
+      if (kwargs == undefined){
+        kwargs = {}
+      }
+      kwargs = Object.assign({
+        r: 10,
+        stroke: "rgba(0,0,0,0.0)",
+        fill: "rgba(0,0,0,0.4)",
+        opacity: 0.8,
+        mouseover: (d, i, node)=>{
+          if (this.tooltip.currentData == null){
+            this.tooltip.show(d, i, node)
+          }
+          this.tooltip.currentData = d
+          if (this.tooltip.currentData != this.tooltipClick.currentData){
+            this.tooltip.show(d, i, node)
+          }
+          this.$emit("circle-mouseover",d)
         },
-        createRadialPlot(plotGroup, scale){
-            var plotRadial = plotGroup.append("g")
-                .attr("class", "r axis")
-                .selectAll("g")
-                .data(scale.ticks(this.options.ticks).slice(1))
-                .enter().append("g")
-
-            plotRadial.append("circle")
-                .style("stroke", "rgba(0,0,0,0.4")
-                .style('fill', 'none')
-                .attr("r", scale)
-
-            plotRadial.append("text")
-                .attr("y", (d)=>{ return - scale(d) - 4; })
-                .attr("transform", "rotate(15)")
-                .style("font-size", "10px")
-                .style("text-anchor", "middle")
-                .text((d)=>{ return d+ "°"; })
-            return plotRadial
+        mouseout: (d, i, node)=>{
+          this.tooltip.hide(d, i, node)
+          this.$emit("circle-mouseout",d)
         },
-        createAngularPlot: function(plotGroup, radius){
-            var plotAngular = plotGroup.append("g")
-                .attr("class", "a axis")
-                .selectAll("g")
-                .data(d3.range(0, 360, 30))
-                    .enter().append("g")
-                    .attr("transform", (d)=>{return `rotate(${d-90})`});
-
-            plotAngular.append("line")
-                .attr("x2", radius)
-                .style("stroke", "rgba(0,0,0,0.4")
-                .style('fill', 'none')
-
-            plotAngular.append("text")
-                .attr("x", radius+6)
-                .attr("dy", ".35em")
-                .style("font-size", "8px")
-                .style("text-anchor", (d)=>{
-                    if (d < 360 && d > 180){
-                        return "end" ;
-                    }else{
-                        return null ;
-                    }
-                })
-                .attr("transform", (d)=>{
-                    if (d < 360 && d > 180){
-                        return `rotate(180 ${radius+6}, 0)`
-                    }else {
-                        return null ;
-                    }
-                })
-                .text((d)=>{ return d + "°"; })
-            return plotAngular
-        },
-
-        createOuterCircle: function(plotGroup, radius){
-            var outerCircle = plotGroup.append('circle')
-                .style("stroke", "rgba(0,0,0,0.4")
-                .style('fill', 'none')
-                .attr('r', radius)
-        },
-
-        createOuterArc: function(plotGroup, radius, tolerance){
-            var largeArc = d3.arc()
-                .innerRadius(radius - tolerance)
-                .outerRadius(radius + tolerance)
-                .startAngle(0)
-                .endAngle(2*Math.PI)
-
-            var outerArc = plotGroup.append('path')
-                .attr('d', largeArc)
-                .attr('id', 'horizon')
-                .style("stroke", "none")
-                .style("fill", "rgba(0,0,0,0.0)")
-            return [outerArc, largeArc]
-        },
-        processPlotOptions: function(kwargs){
-            if (kwargs == undefined){
-                kwargs = {}
+        click: (d, i, node)=>{
+          this.tooltip.hide(d, i, node)
+          var beforeData = this.tooltipClick.currentData
+          this.tooltipClick.currentData = d
+          if (this.tooltipClick.currentData == beforeData){
+            if (! this.tooltipClick.hidden){
+              this.tooltipClick.hide(d, i, node)
+            }else{
+              this.tooltipClick.show(d,i,node)
             }
-            kwargs = Object.assign({
-                r: 10,
-                stroke: "rgba(0,0,0,0.0)",
-                fill: "rgba(0,0,0,0.4)",
-                opacity: 0.8,
-                mouseover: (d, i, node)=>{
-                    if (this.tooltip.currentData == null){
-                        this.tooltip.show(d, i, node)
-                    }
-                    this.tooltip.currentData = d
-                    if (this.tooltip.currentData != this.tooltipClick.currentData){
-                        this.tooltip.show(d, i, node)
-                    }
-                    this.$emit("circle-mouseover",d)
-                },
-                mouseout: (d, i, node)=>{
-                    this.tooltip.hide(d, i, node)
-                    this.$emit("circle-mouseout",d)
-                },
-                click: (d, i, node)=>{
-                    this.tooltip.hide(d, i, node)
-                    var beforeData = this.tooltipClick.currentData
-                    this.tooltipClick.currentData = d
-                    if (this.tooltipClick.currentData == beforeData){
-                        if (! this.tooltipClick.hidden){
-                            this.tooltipClick.hide(d, i, node)
-                        }else{
-                            this.tooltipClick.show(d,i,node)
-                        }
-                    }else{
-                        this.tooltipClick.show(d,i,node)
-                    }
-                    this.$emit("circle-click",d)
-                },
-                dblclick: (d,i,node)=>{this.$emit("circle-dbclick",d,i,node)},
-                class: "scatter"
-            },kwargs)
-            return kwargs
+          }else{
+            this.tooltipClick.show(d,i,node)
+          }
+          this.$emit("circle-click",d)
         },
-        clearCircles: function(){
-            this.plot.selectAll("circle.scatter").remove()
-        },
-        hideCircles: function(type){
-            // console.log(`D3PolarPlot.hideCircles: type: ${type}`)
-            this.plot.selectAll(`circle.scatter.${type}`)
-                .attr("r", 0.0)
-        },
-        showCircles: function(type){
-            // console.log(`D3PolarPlot.showCircles: type: ${type}`)
-            this.plot.selectAll(`circle.scatter.${type}`)
-                .attr("r", this.circleOptions[type].r)
-        },
-        updateCircles: function(data){
-            var kwargs = this.processPlotOptions()
-            // console.log(kwargs["click"])
-            var u = this.plot.selectAll("circles")
-                .data(data)
-            var getOption = (param)=>{
-                return (d)=>{
-                    var optionVal = kwargs[param]
-                    if ("name" in d){
-                        if (d.name in this.circleOptions){
-                            optionVal = this.circleOptions[d.name][param]
-                        }
-                    }
-                    if (optionVal != undefined){
-                        if (optionVal.constructor === Function){
-                            optionVal = optionVal(d)
-                            // if (param === "r"){
-                            //     console.log(optionVal)
-                            // }
-                        }
-                    }
-                    return optionVal
-                }
+        dblclick: (d,i,node)=>{this.$emit("circle-dbclick",d,i,node)},
+        class: "scatter"
+      },kwargs)
+      return kwargs
+    },
+    clearCircles: function(){
+      this.plot.selectAll("circle.scatter").remove()
+    },
+    hideCircles: function(type){
+      // console.log(`D3PolarPlot.hideCircles: type: ${type}`)
+      this.plot.selectAll(`circle.scatter.${type}`)
+        .attr("r", 0.0)
+    },
+    showCircles: function(type){
+      // console.log(`D3PolarPlot.showCircles: type: ${type}`)
+      this.plot.selectAll(`circle.scatter.${type}`)
+        .attr("r", this.circleOptions[type].r)
+    },
+    updateCircles: function(data){
+      var kwargs = this.processPlotOptions()
+      // console.log(kwargs["click"])
+      var u = this.plot.selectAll("circles")
+        .data(data)
+      var getOption = (param)=>{
+        return (d)=>{
+          var optionVal = kwargs[param]
+          if ("name" in d){
+            if (d.name in this.circleOptions){
+              optionVal = this.circleOptions[d.name][param]
             }
-            // console.log(`D3PolarPlot.updateCircles: ${getOption('click')}`)
-            u.enter().append("circle")
-                .merge(u)
-                .attr("id",(d)=>d.name)
-                .attr("class", getOption("class"))
-                .attr("cx", (d)=>{return this.scale(d.el)})
-                .attr("transform", (d)=>{return `rotate(${d.az-90})`})
-                .attr('r',getOption("r"))
-                .style("stroke",getOption("stroke"))
-                .style("fill",getOption("fill"))
-                .style("opacity",getOption("opacity"))
-                .on("mouseover",kwargs.mouseover)
-                .on("mouseout",kwargs.mouseout)
-                .on("click",kwargs.click)
-                .on("dblclick",kwargs.dblclick)
-        },
-        filterNode: function(filterFn){
-            var filtered = d3.selectAll("circle.scatter").filter(filterFn)
-            return filtered
-        }
-    },
-    computed:{
-        key: function(){
-            if (this.plot !== null){
-                this.clearCircles()
-                this.updateCircles(this.circles)
+          }
+          if (optionVal != undefined){
+            if (optionVal.constructor === Function){
+              optionVal = optionVal(d)
+              // if (param === "r"){
+              //   console.log(optionVal)
+              // }
             }
+          }
+          return optionVal
         }
+      }
+      // console.log(`D3PolarPlot.updateCircles: ${getOption('click')}`)
+      u.enter().append("circle")
+        .merge(u)
+        .attr("id",(d)=>d.name)
+        .attr("class", getOption("class"))
+        .attr("cx", (d)=>{return this.scale(d.el)})
+        .attr("transform", (d)=>{return `rotate(${d.az-90})`})
+        .attr('r',getOption("r"))
+        .style("stroke",getOption("stroke"))
+        .style("fill",getOption("fill"))
+        .style("opacity",getOption("opacity"))
+        .on("mouseover",kwargs.mouseover)
+        .on("mouseout",kwargs.mouseout)
+        .on("click",kwargs.click)
+        .on("dblclick",kwargs.dblclick)
     },
-    watch:{
-        width(newVal){
-            this.elWidth = newVal
-        },
-        height(newVal){
-            this.elHeight = newVal
-        },
-        key: function(newKey){},
-        circles(data){
-            this.clearCircles()
-            this.updateCircles(data)
-        }
-    },
-    data: function(){
-        return {
-            elHeight: this.height,
-            elWidth: this.width,
-            plot: null,
-            scale: null,
-        }
+    filterNode: function(filterFn){
+      var filtered = d3.selectAll("circle.scatter").filter(filterFn)
+      return filtered
     }
+  },
+  computed:{
+    key: function(){
+      if (this.plot !== null){
+        this.clearCircles()
+        this.updateCircles(this.circles)
+      }
+    }
+  },
+  watch:{
+    width(newVal){
+      this.elWidth = newVal
+    },
+    height(newVal){
+      this.elHeight = newVal
+    },
+    key: function(newKey){},
+    circles(data){
+      this.clearCircles()
+      this.updateCircles(data)
+    }
+  },
+  data: function(){
+    return {
+      elHeight: this.height,
+      elWidth: this.width,
+      plot: null,
+      scale: null,
+    }
+  }
 }
 
 </script>
