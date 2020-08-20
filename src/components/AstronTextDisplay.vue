@@ -1,6 +1,6 @@
 <template>
   <div>
-    <table class="table is-hoverable" :key="key">
+    <table class="table is-hoverable" :key="key" >
       <thead>
         <td>Name</td>
         <td>Azimuth/ Elevation</td>
@@ -11,8 +11,8 @@
         <td>Rising Time</td>
 
       </thead>
-      <tbody class="tbody">
-        <tr v-for="name in Object.keys(astronDisplayData)">
+      <tbody class="tbody" @mouseout="onMouseout">
+        <tr v-for="(name, index) in Object.keys(astronDisplayData)" @mouseover="onMouseover(name, index)">
           <td>{{name}}</td>
           <td>{{astronDisplayData[name].az}}&deg;/{{astronDisplayData[name].el}}&deg;</td>
           <!-- <td>{{astronDisplayData[name].magnitude}}</td> -->
@@ -37,9 +37,9 @@ export default {
     astronObjects: {type: Object, default: ()=>{return {}}}
   },
   methods: {
-    onClick(name){
-      console.log(JSON.stringify(this.astronObjects[name]))
-    },
+    // onClick(name){
+    //   console.log(JSON.stringify(this.astronObjects[name]))
+    // },
     onResize(){
       if (this.key == 0) {
         this.key = 1
@@ -85,6 +85,12 @@ export default {
     },
     detectMobile(){
       return window.innerWidth > 768
+    },
+    onMouseover(name, index){
+      this.$emit("on-hover", index, name)
+    },
+    onMouseout(){
+      this.$emit("on-mouseout")
     }
   },
   computed: {

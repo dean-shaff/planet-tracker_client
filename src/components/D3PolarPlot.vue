@@ -14,13 +14,30 @@ export default {
     circleOptions: {type:Object, default:()=>{return {}}},
     height: {type:Number, default:300},
     width: {type:Number, default:300},
-    options: {type:Object, default:()=>{return {ticks:5}}}
+    options: {type:Object, default:()=>{return {ticks: 6}}},
+    tooltipTarget: {type: Array, default: () => null},
   },
   mounted: function(){
-    var radius = 0.95*(Math.min(this.elWidth, this.elHeight)/2)
+    var radius = 0.90*(Math.min(this.elWidth, this.elHeight)/2)
+    // var radiusScale = d3.scalePow()
+    //   .exponent(0.5)
+    //   .domain([90, 0])
+    //   .range([0, radius])
     var radiusScale = d3.scaleLinear()
       .domain([90, 0])
       .range([0, radius])
+    //
+    var radiusScale = (d) => {
+      let xReflect = - 1
+      let val = Math.abs(Math.pow(xReflect * ((d/90) - 1), 2.0))*radius
+      if (val < 0) {
+        val = 0.0
+      } else if (val > radius) {
+        val = radius
+      }
+      return val
+    }
+
     var plot = this.createSVG(this.$el)
     var radialPlot = this.createRadialPlot(plot, radiusScale)
     var angularPlot = this.createAngularPlot(plot, radius)
@@ -29,8 +46,10 @@ export default {
     this.plot = plot
     this.scale = radiusScale
     this.tooltip = new D3ToolTip({class: "d3-tip"})
-    // this.tooltipClick = new D3ToolTip({class: "d3-tip"})
-    // this.registerEventHandlers()
+    this.currentElem = null
+
+    this.axisLabelFontSize = "10px"
+
   },
   methods: {
     createSVG(mount){
@@ -42,21 +61,30 @@ export default {
       return svg.append("g")
     },
     createRadialPlot(plotGroup, scale){
+      console.log(`D3PolarPlot.createRadialPlot: ticks=${this.options.ticks}`)
+      // let ticks = scale.ticks(this.options.ticks)
+      // if (ticks[0] == 90) {
+      //   ticks = ticks.slice(1)
+      // }
+      let ticks = [75, 60, 45, 30, 15, 0]
+      // let ticks = [80, 60, 40, 20, 0]
+
       var plotRadial = plotGroup.append("g")
         .attr("class", "r axis")
         .selectAll("g")
-        .data(scale.ticks(this.options.ticks).slice(1))
+        .data(ticks)
         .enter().append("g")
 
       plotRadial.append("circle")
-        .style("stroke", "rgba(0,0,0,0.4")
+        .style("stroke", "rgba(0,0,0,0.4)")
         .style('fill', 'none')
         .attr("r", scale)
 
       plotRadial.append("text")
         .attr("y", (d)=>{ return - scale(d) - 4; })
+        // .attr("y", (d)=>{ return + scale(90 - d) - 4; })
         .attr("transform", "rotate(15)")
-        .style("font-size", "10px")
+        .style("font-size", "12px")
         .style("text-anchor", "middle")
         .text((d)=>{ return d+ "°"; })
       return plotRadial
@@ -71,13 +99,14 @@ export default {
 
       plotAngular.append("line")
         .attr("x2", radius)
-        .style("stroke", "rgba(0,0,0,0.4")
+        .style("stroke", "rgba(0,0,0,0.4)")
         .style('fill', 'none')
 
+      let fontSize = this.axisLabelFontSize
       plotAngular.append("text")
         .attr("x", radius+6)
         .attr("dy", ".35em")
-        .style("font-size", "8px")
+        .style("font-size", "12px")
         .style("text-anchor", (d)=>{
           if (d < 360 && d > 180){
             return "end" ;
@@ -98,9 +127,10 @@ export default {
 
     createOuterCircle: function(plotGroup, radius){
       var outerCircle = plotGroup.append('circle')
-        .style("stroke", "rgba(0,0,0,0.4")
+        .style("stroke", "rgba(0,0,0,0.4)")
         .style('fill', 'none')
         .attr('r', radius)
+      return outerCircle
     },
 
     createOuterArc: function(plotGroup, radius, tolerance){
@@ -126,7 +156,7 @@ export default {
         stroke: "rgba(0,0,0,0.0)",
         fill: "rgba(0,0,0,0.4)",
         opacity: 0.8,
-        mouseover: (d, i, node)=>{
+        mouseover: (d, i, node) => {
           if (this.tooltip.currentData == null){
             this.tooltip.show(d, i, node)
           }
@@ -138,7 +168,7 @@ export default {
         },
         mouseout: (d, i, node)=>{
           this.tooltip.hide(d, i, node)
-          this.$emit("circle-mouseout",d)
+          this.$emit("circle-mouseout", d)
         },
         // click: (d, i, node)=>{
         //   this.tooltip.hide(d, i, node)
@@ -200,11 +230,11 @@ export default {
       // console.log(`D3PolarPlot.updateCircles: ${getOption('click')}`)
       u.enter().append("circle")
         .merge(u)
-        .attr("id",(d)=>d.name)
+        .attr("id",(d) => d.name)
         .attr("class", getOption("class"))
-        .attr("cx", (d)=>{return this.scale(d.el)})
-        .attr("transform", (d)=>{return `rotate(${d.az-90})`})
-        .attr('r',getOption("r"))
+        .attr("cx", (d) => {return this.scale(d.el)})
+        .attr("transform", (d) => {return `rotate(${d.az-90})`})
+        .attr('r', getOption("r"))
         .style("stroke",getOption("stroke"))
         .style("fill",getOption("fill"))
         .style("opacity",getOption("opacity"))
@@ -237,6 +267,18 @@ export default {
     circles(data){
       this.clearCircles()
       this.updateCircles(data)
+    },
+    tooltipTarget(newTooltipTarget){
+      console.log(`D3PolarPlot.tooltipTarget: ${newTooltipTarget}`)
+      if (newTooltipTarget != null) {
+        let elem = d3.select(`#${newTooltipTarget[1]}`)
+        elem.dispatch("mouseover")
+        this.currentElem = elem
+      } else {
+        if (this.currentElem != null) {
+          this.currentElem.dispatch("mouseout")
+        }
+      }
     }
   },
   data: function(){

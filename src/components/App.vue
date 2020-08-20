@@ -30,7 +30,9 @@
             </div>
           </div>
           <astron-text-display
-            :astronObjects="astronObjects">
+            :astronObjects="astronObjects"
+            @on-hover="onAstronTextDisplayHover"
+            @on-mouseout="onAstronTextDisplayMouseout">
           </astron-text-display>
         </div>
         <div class="column" ref="polar-plot-container">
@@ -39,7 +41,8 @@
             :circleOptions="astronPlotOptions"
             :width="polarPlotWidth"
             :height="polarPlotHeight"
-            :key="polarPlotKey">
+            :key="polarPlotKey"
+            :tooltipTarget="astronPlotTooltipTarget">
           </d3-polar-plot>
         </div>
       </div>
@@ -183,6 +186,14 @@ export default {
       // this.astronObjects = Object.assign(this.astronObjects, this.astronObjects[name], data)
       // console.log(this.astronObjects)
     },
+    onAstronTextDisplayHover(index, name) {
+      console.log(`App.onAstronTextDisplayHover: index=${index}, name=${name}`)
+      this.astronPlotTooltipTarget = [index, name]
+    },
+    onAstronTextDisplayMouseout() {
+      console.log(`App.onAstronTextDisplayMouseout`)
+      this.astronPlotTooltipTarget = null
+    },
     onChange(newGeoLocation, newTime){
       console.log(`App.onChange`)
       this.currentTime = newTime
@@ -282,6 +293,7 @@ export default {
         "Neptune": {},
         // "Pluto": {},
       },
+      astronPlotTooltipTarget: null,
       "planetFill": planetFill,
       astronPlotOptions: {
         "Sun": {r: 10, class: "scatter", stroke: 1.0, fill: planetFill["Sun"], opacity: visibleOpacity},
