@@ -25,3 +25,7 @@
 
 - Highlighting table rows alights tooltip in plot
 - Plot uses log scale in radial axis
+
+### 3.2.1
+
+- Reverse log direction

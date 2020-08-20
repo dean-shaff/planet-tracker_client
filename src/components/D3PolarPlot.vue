@@ -19,24 +19,24 @@ export default {
   },
   mounted: function(){
     var radius = 0.90*(Math.min(this.elWidth, this.elHeight)/2)
-    // var radiusScale = d3.scalePow()
-    //   .exponent(0.5)
-    //   .domain([90, 0])
-    //   .range([0, radius])
-    var radiusScale = d3.scaleLinear()
+    var radiusScale = d3.scalePow()
+      .exponent(1.5)
       .domain([90, 0])
       .range([0, radius])
-    //
-    var radiusScale = (d) => {
-      let xReflect = - 1
-      let val = Math.abs(Math.pow(xReflect * ((d/90) - 1), 2.0))*radius
-      if (val < 0) {
-        val = 0.0
-      } else if (val > radius) {
-        val = radius
-      }
-      return val
-    }
+    // var radiusScale = d3.scaleLinear()
+    //   .domain([90, 0])
+    //   .range([0, radius])
+    // //
+    // var radiusScale = (d) => {
+    //   let xReflect = - 1
+    //   let val = Math.abs(Math.pow(xReflect * ((d/90) - 1), 2.0))*radius
+    //   if (val < 0) {
+    //     val = 0.0
+    //   } else if (val > radius) {
+    //     val = radius
+    //   }
+    //   return val
+    // }
 
     var plot = this.createSVG(this.$el)
     var radialPlot = this.createRadialPlot(plot, radiusScale)
