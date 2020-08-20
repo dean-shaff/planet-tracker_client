@@ -15,5 +15,8 @@
 
 - Update npm dependencies
 - Some small source code reformats -- use two spaces instead of four in JS/Vue files.
+
+### Version 3.1.2
+
 - Get rid of click event in Polar Plot
 - Display setting and rising times on mobile.
