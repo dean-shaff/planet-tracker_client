@@ -29,7 +29,7 @@ export default {
     this.plot = plot
     this.scale = radiusScale
     this.tooltip = new D3ToolTip({class: "d3-tip"})
-    this.tooltipClick = new D3ToolTip({class: "d3-tip"})
+    // this.tooltipClick = new D3ToolTip({class: "d3-tip"})
     // this.registerEventHandlers()
   },
   methods: {
@@ -131,30 +131,30 @@ export default {
             this.tooltip.show(d, i, node)
           }
           this.tooltip.currentData = d
-          if (this.tooltip.currentData != this.tooltipClick.currentData){
-            this.tooltip.show(d, i, node)
-          }
+          // if (this.tooltip.currentData != this.tooltipClick.currentData){
+          this.tooltip.show(d, i, node)
+          // }
           this.$emit("circle-mouseover",d)
         },
         mouseout: (d, i, node)=>{
           this.tooltip.hide(d, i, node)
           this.$emit("circle-mouseout",d)
         },
-        click: (d, i, node)=>{
-          this.tooltip.hide(d, i, node)
-          var beforeData = this.tooltipClick.currentData
-          this.tooltipClick.currentData = d
-          if (this.tooltipClick.currentData == beforeData){
-            if (! this.tooltipClick.hidden){
-              this.tooltipClick.hide(d, i, node)
-            }else{
-              this.tooltipClick.show(d,i,node)
-            }
-          }else{
-            this.tooltipClick.show(d,i,node)
-          }
-          this.$emit("circle-click",d)
-        },
+        // click: (d, i, node)=>{
+        //   this.tooltip.hide(d, i, node)
+        //   var beforeData = this.tooltipClick.currentData
+        //   this.tooltipClick.currentData = d
+        //   if (this.tooltipClick.currentData == beforeData){
+        //     if (! this.tooltipClick.hidden){
+        //       this.tooltipClick.hide(d, i, node)
+        //     }else{
+        //       this.tooltipClick.show(d,i,node)
+        //     }
+        //   }else{
+        //     this.tooltipClick.show(d,i,node)
+        //   }
+        //   this.$emit("circle-click",d)
+        // },
         dblclick: (d,i,node)=>{this.$emit("circle-dbclick",d,i,node)},
         class: "scatter"
       },kwargs)
@@ -210,7 +210,7 @@ export default {
         .style("opacity",getOption("opacity"))
         .on("mouseover",kwargs.mouseover)
         .on("mouseout",kwargs.mouseout)
-        .on("click",kwargs.click)
+        // .on("click",kwargs.click)
         .on("dblclick",kwargs.dblclick)
     },
     filterNode: function(filterFn){

@@ -5,16 +5,21 @@
         <td>Name</td>
         <td>Azimuth/ Elevation</td>
         <!-- <td><a href="https://en.wikipedia.org/wiki/Apparent_magnitude" target="_blank"><em>m</em></a></td> -->
-        <td v-show="detectMobile()">Setting Time</td>
-        <td v-show="detectMobile()">Rising Time</td>
+        <!-- <td v-show="detectMobile()">Setting Time</td>
+        <td v-show="detectMobile()">Rising Time</td> -->
+        <td>Setting Time</td>
+        <td>Rising Time</td>
+
       </thead>
       <tbody class="tbody">
         <tr v-for="name in Object.keys(astronDisplayData)">
           <td>{{name}}</td>
           <td>{{astronDisplayData[name].az}}&deg;/{{astronDisplayData[name].el}}&deg;</td>
           <!-- <td>{{astronDisplayData[name].magnitude}}</td> -->
-          <td v-show="detectMobile()">{{astronDisplayData[name].setting_time}}</td>
-          <td v-show="detectMobile()">{{astronDisplayData[name].rising_time}}</td>
+          <!-- <td v-show="detectMobile()">{{astronDisplayData[name].setting_time}}</td>
+          <td v-show="detectMobile()">{{astronDisplayData[name].rising_time}}</td> -->
+          <td>{{astronDisplayData[name].setting_time}}</td>
+          <td>{{astronDisplayData[name].rising_time}}</td>
         </tr>
       </tbody>
     </table>
@@ -45,6 +50,10 @@ export default {
     updateDisplayData(){
       var displayData = {}
       const pyEphemStrFormat = "YYYY/M/D HH:mm:ss"
+      var decimalPlaces = 0
+      if (this.detectMobile()) {
+        decimalPlaces = 2
+      }
       Object.keys(this.astronObjects).forEach((name)=>{
         var displayObject = Object.assign({}, this.astronObjects[name])
 
@@ -61,11 +70,11 @@ export default {
           displayObject.setting_time = settingTimeMoment.local().format("HH:mm")
           displayObject.rising_time = "-"
         }
-        
+
         this.formattableFields.forEach((field)=>{
           var fieldVal = displayObject[field]
           if (typeof fieldVal === "number"){
-            displayObject[field] = util.radToDegree(fieldVal).toFixed(2)
+            displayObject[field] = util.radToDegree(fieldVal).toFixed(decimalPlaces)
           }
         })
 

@@ -43,8 +43,9 @@
           </d3-polar-plot>
         </div>
       </div>
+      <div class="is-divider"></div>
       <!-- <div class="is-size-5" v-html="status"></div> -->
-      <div class="level">
+      <!-- <div class="level">
         <div class="is-size-6 level-item has-text-centered">Version {{version}}</div>
       </div>
       <div class="level">
@@ -53,7 +54,14 @@
           Source
         </div>
         </a>
+      </div> -->
+      <div class="level">
+        <div class="is-size-6">Version {{version}}</div>
+        <a href="https://github.com/dean-shaff/planet-tracker" target="_blank">
+          <div class="is-size-6 red-hover">Source</div>
+        </a>
       </div>
+
     </div>
   </section>
 </div>
