@@ -1,6 +1,48 @@
 <template>
 <div :key="key">
-  <div class="field is-horizontal">
+  <div class="field">
+    <label class="label">Date</label>
+    <div class="control">
+      <input class="input" v-model="currentDate" />
+    </div>
+    <div  class="field is-grouped">
+      <div class="control is-expanded">
+        <input class="slider is-fullwidth is-medium" step="1" min="-365" max="365" v-model="day" type="range">
+      </div>
+      <div class="control">
+        <span
+          class="icon is-small is-left tooltip"
+          :class="toolTipClass"
+          :data-tooltip="helpText.date"
+          v-html="questionMark">
+        </span>
+      </div>
+    </div>
+  </div>
+  <div class="field">
+    <label class="label">Time</label>
+    <div class="control">
+      <input class="input" v-model="currentTime"/>
+    </div>
+    <div class="field is-grouped">
+      <div class="control is-expanded">
+        <input class="slider is-fullwidth is-medium" step="15" :min="-24*60" :max="24*60" v-model="minute" type="range">
+      </div>
+      <div class="control">
+        <span
+          class="icon is-small is-left tooltip"
+          :class="toolTipClass"
+          :data-tooltip="helpText.time"
+          v-html="questionMark">
+        </span>
+      </div>
+    </div>
+  </div>
+  <div class="field">
+    <button class="button" @click="onClick">Now</button>
+  </div>
+
+  <!-- <div class="field is-horizontal">
     <div class="field-label is-normal">
       <label class="label">Date
       </label>
@@ -53,7 +95,7 @@
         </span>
       </div>
     </div>
-  </div>
+  </div> -->
 </div>
 </template>
 
@@ -78,16 +120,33 @@ export default {
         this.key = 0
       }
     },
+    reset(){
+      this.day = 0
+      this.minute = 0
+      this.currentTime = this.time.format("HH:mm:ss")
+      this.currentDate = this.time.format("YYYY/MM/DD")
+    },
+    onClick(){
+      this.reset()
+    },
+    // onDatekeydown(evt){
+    //   if (evt.key === 'Enter') {
+    //
+    //   }
+    // },
+    emitChangeEvent(){
+      this.$emit("change", this.parseDateTime())
+    },
     // onGetEphemeridesClick(){
-    //   this.initialTime = this.parseDateTime()
+    //   this.initialDateTime = this.parseDateTime()
     //   console.log(
     //     `GeoLocationTimeDisplay.onGetEphemeridesClick: lat: ${this.lat}, lon: ${this.lon}, elevation: ${this.elevation}`)
     //   console.log(
-    //     `GeoLocationTimeDisplay.onGetEphemeridesClick: time: ${this.initialTime}`)
+    //     `GeoLocationTimeDisplay.onGetEphemeridesClick: time: ${this.initialDateTime}`)
     //   this.$emit(
     //     "on-change",
     //     this.getGeoLocation(),
-    //     this.initialTime
+    //     this.initialDateTime
     //   )
     // },
     parseDateTime(){
@@ -121,37 +180,46 @@ export default {
     this.$nextTick(this.onResize)
   },
   watch: {
-    geoLocation(){
-      this.lat = this.geoLocation.lat
-      this.lon = this.geoLocation.lon
-      this.elevation = this.geoLocation.elevation
-    },
     time(){
       this.currentTime = this.time.format("HH:mm:ss")
       this.currentDate = this.time.format("YYYY/MM/DD")
     },
     minute(){
-      var currentTimeObj = this.initialTime.clone()
+      // minuteFlag = !minuteFlag
+      var currentTimeObj = this.initialDateTime.clone()
       currentTimeObj.add(this.minute, "minutes")
       this.currentTime = currentTimeObj.format("HH:mm:ss")
-      this.$emit("change", this.parseDateTime())
+      this.emitChangeEvent()
     },
     day(){
-      var currentTimeObj = this.initialTime.clone()
+      // dayFlag = !dayFlag
+      var currentTimeObj = this.initialDateTime.clone()
       currentTimeObj.add(this.day, "days")
       this.currentDate = currentTimeObj.format("YYYY/MM/DD")
-      this.$emit("change", this.parseDateTime())
+      this.emitChangeEvent()
+    },
+    currentTime(){
+      console.log(`TimeDisplay.watch.currentTime`)
+      this.currentDateTime = this.parseDateTime()
+      // let minutes = this.currentDateTime.diff(this.initialDateTime, "minutes")
+
+    },
+    currentDate(){
+      console.log(`TimeDisplay.watch.currentDate`)
     },
     toolTipClass(){
       // console.log('toolTipClass: watch')
     }
-  },
+  }
   data() {
     return {
-      initialTime: this.time.clone(),
+      initialDateTime: this.time.clone(),
+      currentDateTime: this.time.clone(),
       currentTime: this.time.format("HH:mm:ss"),
       currentDate: this.time.format("YYYY/MM/DD"),
+      minuteFlag: false,
       minute: 0,
+      dayFlag: false,
       day: 0,
       helpText: {
         date: "Move the slider to increment the date by 1 day",
@@ -169,6 +237,6 @@ export default {
 
 <style scoped>
 .control span {
-  margin-top: 1rem;
+  margin-top: 1.3rem;
 }
 </style>
