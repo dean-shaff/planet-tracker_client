@@ -17,12 +17,31 @@
               <h3 class="subtitle is-3">Geo Location and Time</h3>
             </div>
           </div>
-          <geo-location-time-display
+          <div ref="geo-location-time-display-container">
+            <geo-location-display
+              :width="geoLocationDisplayWidth"
+              :height="geoLocationDisplayHeight"
+              :key="geoLocationDisplayKey"
+              @change="onGeoLocationDisplayChange">
+            </geo-location-display>
+            <div class="is-divider"></div>
+            <time-display
+              :time="currentTime"
+              @change="onTimeDisplayChange">
+            </time-display>
+          </div>
+
+          <!-- <geo-location-time-display
             :time="currentTime"
             :geoLocation="geoLocation"
+            :geoLocationDisplayWidth="geoLocationDisplayWidth"
+            :geoLocationDisplayHeight="geoLocationDisplayHeight"
+            :geoLocationDisplayKey="geoLocationDisplayKey"
             @on-change="onChange"
-            @on-here="onHere">
-          </geo-location-time-display>
+            @on-here="onHere"
+            @on-geolocation="onGeolocation">
+          </geo-location-time-display> -->
+
           <div class="is-divider"></div>
           <div class="level">
             <div class="level-item">
@@ -74,9 +93,11 @@
 import Vue from "vue"
 import moment from "moment"
 
-import GeoLocationTimeDisplay from "./GeoLocationTimeDisplay.vue"
 import AstronTextDisplay from "./AstronTextDisplay.vue"
 import D3PolarPlot from "./D3PolarPlot.vue"
+import GeoLocationDisplay from "./GeoLocationDisplay.vue"
+import TimeDisplay from "./TimeDisplay.vue"
+
 
 import util from "./../util.js"
 
@@ -89,19 +110,18 @@ export default {
   components:{
     "astron-text-display": AstronTextDisplay,
     "d3-polar-plot": D3PolarPlot,
-    // "time-display": TimeDisplay,
-    // "geo-location-display": GeoLocationDisplay
-    "geo-location-time-display": GeoLocationTimeDisplay
+    "geo-location-display": GeoLocationDisplay,
+    "time-display": TimeDisplay
   },
   methods:{
     init(){
       console.log("App.init")
-      return this.requestGeoLocation(
-      ).then(this.setGeoLocation
-      ).then((geoLocation)=>{
-        this.currentTime = moment()
-        return this.requestAstronCoordinates(geoLocation, this.currentTime)
-      })
+      // return this.requestGeoLocation(
+      // ).then(this.setGeoLocation
+      // ).then((geoLocation)=>{
+      //   this.currentTime = moment()
+      //   return this.requestAstronCoordinates(geoLocation, this.currentTime)
+      // })
     },
     get(url, data){
       var request = new XMLHttpRequest()
@@ -134,7 +154,7 @@ export default {
         var reqDataUrlArr = Object.keys(reqData).map((c) => {
           return `${c}=${reqData[c]}`
         })
-        console.log(reqDataUrlArr)
+        // console.log(reqDataUrlArr)
         this.get(
           "./get_astron_object_data",
           reqDataUrlArr.join("&")
@@ -194,19 +214,35 @@ export default {
       console.log(`App.onAstronTextDisplayMouseout`)
       this.astronPlotTooltipTarget = null
     },
-    onChange(newGeoLocation, newTime){
-      console.log(`App.onChange`)
+    // onChange(newGeoLocation, newTime){
+    //   console.log(`App.onChange`)
+    //   this.currentTime = newTime
+    //   this.geoLocation = Object.assign(this.geoLocation, newGeoLocation)
+    //   this.requestAstronCoordinates(this.geoLocation, this.currentTime)
+    // },
+    // onHere(){
+    //   console.log(`App.onHere`)
+    //   this.requestGeoLocation(
+    //   ).then(this.setGeoLocation
+    //   ).then((geoLocation)=>{
+    //     return this.requestAstronCoordinates(geoLocation, this.currentTime)
+    //   }).catch(this.geoLocationError)
+    // },
+    // onGeolocation(newGeoLocation, newTime){
+    //   console.log(`App.onGeolocation`)
+    //   this.currentTime = newTime
+    //   this.geoLocation = Object.assign(this.geoLocation, newGeoLocation)
+    //   this.requestAstronCoordinates(this.geoLocation, this.currentTime)
+    // },
+    onTimeDisplayChange(newTime){
+      console.log(`App.onTimeDisplayChange`)
       this.currentTime = newTime
-      this.geoLocation = Object.assign(this.geoLocation, newGeoLocation)
       this.requestAstronCoordinates(this.geoLocation, this.currentTime)
     },
-    onHere(){
-      console.log(`App.onHere`)
-      this.requestGeoLocation(
-      ).then(this.setGeoLocation
-      ).then((geoLocation)=>{
-        return this.requestAstronCoordinates(geoLocation, this.currentTime)
-      }).catch(this.geoLocationError)
+    onGeoLocationDisplayChange(newGeoLocation){
+      console.log(`App.onGeoLocationDisplayChange`)
+      this.geoLocation = Object.assign(this.geoLocation, newGeoLocation)
+      this.requestAstronCoordinates(this.geoLocation, this.currentTime)
     },
     reRenderPolarPlot(){
       var width = this.$refs["polar-plot-container"].offsetWidth
@@ -216,6 +252,16 @@ export default {
         this.polarPlotKey = 1
       }else{
         this.polarPlotKey = 0
+      }
+    },
+    reRenderGeoLocationTimeDisplay() {
+      let width = this.$refs["geo-location-time-display-container"].offsetWidth
+      this.geoLocationDisplayWidth = width
+      this.geoLocationDisplayHeight = width
+      if (this.geoLocationDisplayKey === 0){
+        this.geoLocationDisplayKey = 1
+      }else{
+        this.geoLocationDisplayKey = 0
       }
     },
     calculateSizeFromMagnitude(magnitude){
@@ -252,14 +298,17 @@ export default {
     }
   },
   mounted(){
+    // this.reRenderPolarPlot()
+    // window.addEventListener('resize', this.reRenderPolarPlot)
     this.reRenderPolarPlot()
-    window.addEventListener('resize', this.reRenderPolarPlot)
-    this.init().catch((err) => {
-      console.error(`Error: ${err}`)
-    })
+    this.reRenderGeoLocationTimeDisplay()
+    window.addEventListener('resize', () => {this.reRenderPolarPlot(); this.reRenderGeoLocationTimeDisplay()})
+    // this.init().catch((err) => {
+    //   console.error(`Error: ${err}`)
+    // })
   },
   destroyed(){
-    this.socket.close()
+    // this.socket.close()
   },
   data(){
     var planetFill = {
@@ -279,6 +328,9 @@ export default {
     return {
       currentTime: moment(),
       geoLocation: {lat: 0.0, lon: 0.0, elevation: 0.0},
+      geoLocationDisplayWidth: 100,
+      geoLocationDisplayHeight: 100,
+      geoLocationDisplayKey: 0,
       status: "",
       socket: null,
       astronObjects: {

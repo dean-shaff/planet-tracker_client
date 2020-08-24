@@ -54,61 +54,6 @@
       </div>
     </div>
   </div>
-  <!-- <div class="field is-horizontal">
-    <div class="field-label ">
-      <label class="label">Longitude</label>
-    </div>
-    <div class="field field-body is-grouped">
-      <div class="control is-expanded ">
-        <input type="number" class="input " v-model="lon"/>
-      </div>
-    </div>
-  </div>
-  <div class="field is-horizontal">
-    <div class="field-label ">
-      <label class="label">Latitude</label>
-    </div>
-    <div class="field field-body is-grouped">
-      <div class="control is-expanded">
-        <input type="number" class="input "v-model="lat"/>
-      </div>
-    </div>
-  </div>
-  <div class="field is-horizontal">
-    <div class="field-label ">
-      <label class="label">Elevation</label>
-    </div>
-    <div class="field field-body is-grouped">
-      <div class="control is-expanded">
-        <input type="number" class="input "v-model="elevation"/>
-      </div>
-    </div>
-  </div> -->
-  <tile-map
-    class="field is-horizontal"
-    :lat="lat"
-    :lon="lon"
-    :elevation="elevation"
-    :width="tileMapWidth"
-    :height="tileMapHeight"
-    :key="tileMapKey"
-    @geolocation="onGeolocation">
-  </tile-map>
-
-  <!-- <div class="field is-horizontal">
-    <div class="field field-label"></div>
-    <div class="field field-body is-grouped">
-      <div class="control">
-        <button class="button" @click="onGetEphemeridesClick">Get Ephemerides</button>
-      </div>
-      <div class="control">
-        <button class="button" @click="onHereClick">Here</button>
-      </div>
-      <div class="control">
-        <button class="button" @click="onNowClick">Now</button>
-      </div>
-    </div>
-  </div> -->
 </div>
 </template>
 
@@ -117,18 +62,12 @@
 import moment from "moment"
 import octicons from "octicons"
 
-import TileMap from "./TileMap.vue"
 
 export default {
   props: {
-    geoLocation: {type: Object, default: ()=>{return null}},
-    tileMapWidth: {type: Number, default: 300},
-    tileMapHeight: {type: Number, default: 300},
-    tileMapKey: {type: Number, default: 0},
     time: {type: Object, default: ()=>{return moment()}}
   },
   components: {
-    "tile-map": TileMap
   },
   methods: {
     onResize(){
@@ -139,34 +78,18 @@ export default {
         this.key = 0
       }
     },
-    onGetEphemeridesClick(){
-      this.initialTime = this.parseDateTime()
-      console.log(
-        `GeoLocationTimeDisplay.onGetEphemeridesClick: lat: ${this.lat}, lon: ${this.lon}, elevation: ${this.elevation}`)
-      console.log(
-        `GeoLocationTimeDisplay.onGetEphemeridesClick: time: ${this.initialTime}`)
-      this.$emit(
-        "on-change",
-        this.getGeoLocation(),
-        this.initialTime
-      )
-    },
-    onHereClick(){
-      console.log(
-        `GeoLocationDisplay.onHereClick`
-      )
-      this.$emit("on-here")
-    },
-    onNowClick(){
-      var now = moment()
-      this.initialTime = now.clone()
-      this.$emit("on-change", this.getGeoLocation(), now)
-    },
-    onGeolocation(evt){
-      var now = moment()
-      this.initialTime = now.clone()
-      this.$emit("geolocation", evt, now)
-    },
+    // onGetEphemeridesClick(){
+    //   this.initialTime = this.parseDateTime()
+    //   console.log(
+    //     `GeoLocationTimeDisplay.onGetEphemeridesClick: lat: ${this.lat}, lon: ${this.lon}, elevation: ${this.elevation}`)
+    //   console.log(
+    //     `GeoLocationTimeDisplay.onGetEphemeridesClick: time: ${this.initialTime}`)
+    //   this.$emit(
+    //     "on-change",
+    //     this.getGeoLocation(),
+    //     this.initialTime
+    //   )
+    // },
     parseDateTime(){
       var dateTime = moment(
         `${this.currentDate} ${this.currentTime}`,
@@ -211,13 +134,13 @@ export default {
       var currentTimeObj = this.initialTime.clone()
       currentTimeObj.add(this.minute, "minutes")
       this.currentTime = currentTimeObj.format("HH:mm:ss")
-      this.$emit("on-change", this.getGeoLocation(), this.parseDateTime())
+      this.$emit("change", this.parseDateTime())
     },
     day(){
       var currentTimeObj = this.initialTime.clone()
       currentTimeObj.add(this.day, "days")
       this.currentDate = currentTimeObj.format("YYYY/MM/DD")
-      this.$emit("on-change", this.getGeoLocation(), this.parseDateTime())
+      this.$emit("change", this.parseDateTime())
     },
     toolTipClass(){
       // console.log('toolTipClass: watch')
@@ -225,9 +148,6 @@ export default {
   },
   data() {
     return {
-      "lat":this.geoLocation.lat,
-      "lon":this.geoLocation.lon,
-      "elevation":this.geoLocation.elevation,
       initialTime: this.time.clone(),
       currentTime: this.time.format("HH:mm:ss"),
       currentDate: this.time.format("YYYY/MM/DD"),
