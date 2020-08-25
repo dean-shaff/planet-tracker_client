@@ -1,6 +1,7 @@
 <template>
 <div
-  :style="{'width': width + 'px', 'height': height + 'px'}">
+  :style="{'width': width + 'px', 'height': height + 'px'}"
+  ref="geo-location-display">
 </div>
 </template>
 
@@ -59,15 +60,17 @@ export default {
 
 
       map.on("locationfound", this.onLocationfound())
-      // map.on("click", this.onClick())
       map.on("contextmenu", this.onContextmenu())
 
       let locationControl = L.control.locate({
         keepCurrentZoomLevel: true
       }).addTo(map)
       locationControl.start()
+      this.locationControl = locationControl
 
       this.map = map
+      this.marker = null
+      // this.$ref['geo-location-display']
       // let marker = L.marker([lat, lon]).addTo(map);
       // this.marker = marker
     },
@@ -87,6 +90,7 @@ export default {
         this.$emit("change", geoLocation)
         this.geoLocation = geoLocation
       }
+      return same
     },
     onClick(){
       return () => {
@@ -96,15 +100,25 @@ export default {
     onLocationfound(){
       return (evt) => {
         let latlng = evt.latlng
+        console.log(`GeoLocationDisplay.onLocationfound`)
         this.updateGeoLocationFromLatLng(latlng)
+        this.map.setView([latlng.lat, latlng.lng])
+        if (this.marker != null) {
+          this.map.removeLayer(this.marker)
+          this.marker = null
+        }
       }
     },
     onContextmenu(){
       return (evt) => {
         console.log(`GeoLocationDisplay.onContextmenu`)
         let latlng = evt.latlng
-        this.map.setView([latlng.lat, latlng.lng]) //, this.zoom)
-        this.updateGeoLocationFromLatLng(evt.latlng)
+        this.updateGeoLocationFromLatLng(latlng)
+        if (this.marker == null) {
+          this.marker = L.marker([latlng.lat, latlng.lng]).addTo(this.map)
+        } else {
+          this.marker.setLatLng(latlng)
+        }
       }
     }
   },

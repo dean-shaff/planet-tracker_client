@@ -14,15 +14,19 @@
         <div class="column is-one-third">
           <div class="level">
             <div class="level-left">
-            <div class="level-item">
-              <!-- <h3 class="subtitle is-5">Geo Location</h3> -->
-              <label class="label">Geo Location</label>
-              <span
-                class="icon is-small is-left tooltip"
-                :data-tooltip="helpText.geoLocation"
-                v-html="questionMark">
-              </span>
+              <div class="level-item">
+                <!-- <h3 class="subtitle is-5">Geo Location</h3> -->
+                <label class="label">Geo Location</label>
+              </div>
             </div>
+            <div class="level-right">
+              <div class="level-item">
+                <span
+                  class="icon is-small is-left tooltip"
+                  :data-tooltip="helpText.geoLocation"
+                  v-html="questionMark">
+                </span>
+              </div>
             </div>
           </div>
           <div ref="geo-location-time-display-container">
@@ -398,7 +402,7 @@ export default {
   flex-grow: 2;
 }
 
-.level-item span {
+/* .level-item span {
   margin-top: -0.4rem;
-}
+} */
 </style>

@@ -5237,9 +5237,10 @@ readers do not read off random characters that represent icons */
 .field-label{
   flex-grow: 2;
 }
-.level-item span {
+
+/* .level-item span {
   margin-top: -0.4rem;
-}
+} */
 
 /*! bulma.io v0.7.5 | MIT License | github.com/jgthms/bulma */
 @-webkit-keyframes spinAround {

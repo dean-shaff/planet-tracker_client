@@ -129,17 +129,16 @@ export default {
   },
   methods: {
     onResize(){
-      if (util.detectMobile()) {
-        this.toolTipClass = {
-          "is-tooltip-bottom": true
-        }
-      }
-      else {
+      if (util.isMobile()) {
         this.toolTipClass = {
           "is-tooltip-left": true
         }
       }
-
+      else {
+        this.toolTipClass = {
+          "is-tooltip-bottom": true
+        }
+      }
       if (this.key === 0){
         this.key = 1
       } else {
@@ -147,6 +146,7 @@ export default {
       }
     },
     reset(){
+      this.initialDateTime = moment()
       this.currentDateTime = this.initialDateTime.clone()
       // this.day = 0
       // this.minute = 0

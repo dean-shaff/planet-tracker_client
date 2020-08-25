@@ -6,7 +6,7 @@ function Util(){
     return (180./Math.PI)*val
   }
 
-  this.detectMobile = function() {
+  this.isMobile = function() {
     if (window.innerWidth > 768) {
       return false
     }
