@@ -66,11 +66,18 @@ export default {
         keepCurrentZoomLevel: true
       }).addTo(map)
       locationControl.start()
+      // locationControl.stopFollowing()
+
       this.locationControl = locationControl
 
       this.map = map
       this.marker = null
-      // this.$ref['geo-location-display']
+
+      let hereSelector = this.$refs['geo-location-display'].querySelector("a.leaflet-bar-part")
+      console.log(hereSelector, hereSelector.constructor)
+      hereSelector.onclick = this.onHereClick(false)
+
+      // /html/body/div[1]/section/div/div[3]/div[1]/div[2]/div[1]/div[2]/div[1]/div[2]/a
       // let marker = L.marker([lat, lon]).addTo(map);
       // this.marker = marker
     },
@@ -80,32 +87,32 @@ export default {
         "lon": latlng.lng,
         "elevation": 0.0
       }
-      let same = true
-      Object.keys(geoLocation).forEach((key) => {
-        if (geoLocation[key] !== this.geoLocation[key]) {
-          same = false
-        }
-      })
-      if (! same) {
-        this.$emit("change", geoLocation)
-        this.geoLocation = geoLocation
-      }
-      return same
+      this.geoLocation = Object.assign({}, geoLocation)
     },
-    onClick(){
+    onHereClick(toggle){
       return () => {
-        console.log(`GeoLocationDisplay.onClick`)
+        // console.log(`GeoLocationDisplay.onHereClick: ${toggle}`)
+        // console.log(this.map.getCenter())
+        if (toggle) {
+          this.geoLocation = Object.assign({}, this.detectedGeoLocation)
+          this.updateOnLocationfound = true
+          if (this.marker != null) {
+            this.map.removeLayer(this.marker)
+            this.marker = null
+          }
+        }
+        toggle = !toggle
       }
     },
     onLocationfound(){
       return (evt) => {
-        let latlng = evt.latlng
         console.log(`GeoLocationDisplay.onLocationfound`)
-        this.updateGeoLocationFromLatLng(latlng)
-        this.map.setView([latlng.lat, latlng.lng])
-        if (this.marker != null) {
-          this.map.removeLayer(this.marker)
-          this.marker = null
+        if (this.updateOnLocationfound) {
+          let latlng = evt.latlng
+          this.updateGeoLocationFromLatLng(latlng)
+          this.detectedGeoLocation = Object.assign({}, this.geoLocation)
+          this.map.setView([latlng.lat, latlng.lng])
+          this.updateOnLocationfound = false
         }
       }
     },
@@ -122,11 +129,26 @@ export default {
       }
     }
   },
+  watch: {
+    geoLocation(newGeoLocation, oldGeoLocation) {
+      let same = true
+      Object.keys(oldGeoLocation).forEach((key) => {
+        if (oldGeoLocation[key] !== newGeoLocation[key]) {
+          same = false
+        }
+      })
+      if (! same) {
+        this.$emit("change", newGeoLocation)
+      }
+    }
+  },
   data: function () {
     return {
       "geoLocation": {lat: 0.0, lon: 0.0, elevation: 0.0},
+      "detectedGeoLocation": {lat: 0.0, lon: 0.0, elevation: 0.0},
       "map": null,
-      "marker": null
+      "marker": null,
+      "updateOnLocationfound": true
     }
   }
 }
