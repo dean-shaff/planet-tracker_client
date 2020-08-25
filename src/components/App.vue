@@ -196,7 +196,7 @@ export default {
     },
     getAstronObjectData(data){
       var name = data.name
-      console.log(`App.getAstronObjectData: ${name}`)
+      // console.log(`App.getAstronObjectData: ${name}`)
       var astronObjectsCopy = Object.assign({}, this.astronObjects)
       astronObjectsCopy[name] = data
       this.astronObjects = Object.assign({}, astronObjectsCopy)
