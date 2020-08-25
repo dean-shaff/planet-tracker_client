@@ -29,3 +29,8 @@
 ### 3.2.1
 
 - Reverse log direction
+
+### 4.0.0
+
+- Using Leaflet map instead of manual entry geolocation
+- text and slider inputs are reactive in time/date display

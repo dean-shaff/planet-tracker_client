@@ -2,7 +2,7 @@ import Vue from "vue"
 
 import App from "./components/App.vue"
 
-const version = "3.2.1"
+const version = "4.0.0"
 
 var init = ()=>{
   var app = new Vue({
