@@ -120,6 +120,8 @@
 import moment from "moment"
 import octicons from "octicons"
 
+import util from "./../util.js"
+
 
 export default {
   props: {
@@ -127,10 +129,20 @@ export default {
   },
   methods: {
     onResize(){
-      this.detectMobile()
+      if (util.detectMobile()) {
+        this.toolTipClass = {
+          "is-tooltip-bottom": true
+        }
+      }
+      else {
+        this.toolTipClass = {
+          "is-tooltip-left": true
+        }
+      }
+
       if (this.key === 0){
         this.key = 1
-      }else{
+      } else {
         this.key = 0
       }
     },
@@ -178,17 +190,6 @@ export default {
         "YYYY/MM/DD HH:mm:ss"
       )
       return dateTime
-    },
-    detectMobile(){
-      if (window.innerWidth > 768){
-        this.toolTipClass = {
-          "is-tooltip-bottom": true
-        }
-      } else {
-        this.toolTipClass = {
-          "is-tooltip-left": true
-        }
-      }
     }
   },
   mounted(){

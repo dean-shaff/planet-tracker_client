@@ -254,16 +254,15 @@ export default {
         this.clearCircles()
         this.updateCircles(this.circles)
       }
+    },
+    elWidth: function () {
+      return 0.95*this.width
+    },
+    elHeight: function () {
+      return 0.95*this.height
     }
   },
   watch:{
-    width(newVal){
-      this.elWidth = newVal
-    },
-    height(newVal){
-      this.elHeight = newVal
-    },
-    key: function(newKey){},
     circles(data){
       this.clearCircles()
       this.updateCircles(data)
@@ -283,8 +282,6 @@ export default {
   },
   data: function(){
     return {
-      elHeight: this.height,
-      elWidth: this.width,
       plot: null,
       scale: null,
     }

@@ -54,11 +54,13 @@ export default {
           tileSize: 512,
           zoomOffset: -1,
           accessToken: token
-        }).addTo(map);        
+        }).addTo(map);
       }
 
 
       map.on("locationfound", this.onLocationfound())
+      // map.on("click", this.onClick())
+      map.on("contextmenu", this.onContextmenu())
 
       let locationControl = L.control.locate({
         keepCurrentZoomLevel: true
@@ -69,29 +71,40 @@ export default {
       // let marker = L.marker([lat, lon]).addTo(map);
       // this.marker = marker
     },
-    // updateMap() {
-      // const [lat, lon] = [this.geoLocation.lat, this.geoLocation.lon]
-      // this.map.setView([lat, lon], this.zoom)
-      // this.marker.setLatLng([lat, lon])
-    // },
+    updateGeoLocationFromLatLng(latlng) {
+      let geoLocation = {
+        "lat": latlng.lat,
+        "lon": latlng.lng,
+        "elevation": 0.0
+      }
+      let same = true
+      Object.keys(geoLocation).forEach((key) => {
+        if (geoLocation[key] !== this.geoLocation[key]) {
+          same = false
+        }
+      })
+      if (! same) {
+        this.$emit("change", geoLocation)
+        this.geoLocation = geoLocation
+      }
+    },
+    onClick(){
+      return () => {
+        console.log(`GeoLocationDisplay.onClick`)
+      }
+    },
     onLocationfound(){
       return (evt) => {
         let latlng = evt.latlng
-        let geoLocation = {
-          "lat": latlng.lat,
-          "lon": latlng.lng,
-          "elevation": 0.0
-        }
-        let same = true
-        Object.keys(geoLocation).forEach((key) => {
-          if (geoLocation[key] !== this.geoLocation[key]) {
-            same = false
-          }
-        })
-        if (! same) {
-          this.$emit("change", geoLocation)
-          this.geoLocation = geoLocation
-        }
+        this.updateGeoLocationFromLatLng(latlng)
+      }
+    },
+    onContextmenu(){
+      return (evt) => {
+        console.log(`GeoLocationDisplay.onContextmenu`)
+        let latlng = evt.latlng
+        this.map.setView([latlng.lat, latlng.lng]) //, this.zoom)
+        this.updateGeoLocationFromLatLng(evt.latlng)
       }
     }
   },

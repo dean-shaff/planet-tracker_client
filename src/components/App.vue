@@ -13,8 +13,16 @@
       <div class="columns">
         <div class="column is-one-third">
           <div class="level">
+            <div class="level-left">
             <div class="level-item">
-              <h3 class="subtitle is-3">Geo Location and Time</h3>
+              <!-- <h3 class="subtitle is-5">Geo Location</h3> -->
+              <label class="label">Geo Location</label>
+              <span
+                class="icon is-small is-left tooltip"
+                :data-tooltip="helpText.geoLocation"
+                v-html="questionMark">
+              </span>
+            </div>
             </div>
           </div>
           <div ref="geo-location-time-display-container">
@@ -22,7 +30,8 @@
               :width="geoLocationDisplayWidth"
               :height="geoLocationDisplayHeight"
               :key="geoLocationDisplayKey"
-              mode="osm"
+              mode="mapbox"
+              :zoom="5"
               @change="onGeoLocationDisplayChange">
             </geo-location-display>
             <div class="is-divider"></div>
@@ -93,11 +102,13 @@
 <script>
 import Vue from "vue"
 import moment from "moment"
+import octicons from "octicons"
 
 import AstronTextDisplay from "./AstronTextDisplay.vue"
 import D3PolarPlot from "./D3PolarPlot.vue"
 import GeoLocationDisplay from "./GeoLocationDisplay.vue"
 import TimeDisplay from "./TimeDisplay.vue"
+
 
 
 import util from "./../util.js"
@@ -246,7 +257,8 @@ export default {
       this.requestAstronCoordinates(this.geoLocation, this.currentTime)
     },
     reRenderPolarPlot(){
-      var width = this.$refs["polar-plot-container"].offsetWidth
+      let width = this.$refs["polar-plot-container"].offsetWidth
+      console.log(`App.reRenderPolarPlot: width=${width}`)
       this.polarPlotWidth = width
       this.polarPlotHeight = width
       if (this.polarPlotKey === 0){
@@ -367,7 +379,14 @@ export default {
       astronPlotData: [],
       polarPlotWidth: 100,
       polarPlotHeight: 100,
-      polarPlotKey: 0
+      polarPlotKey: 0,
+      toolTipClass: {
+        'is-tooltip-bottom': true,
+      },
+      questionMark: octicons.question.toSVG(),
+      helpText: {
+        geoLocation: "Right click on map to calculate new ephemerides"
+      }
     }
   }
 }
@@ -377,5 +396,9 @@ export default {
 <style>
 .field-label{
   flex-grow: 2;
+}
+
+.level-item span {
+  margin-top: -0.4rem;
 }
 </style>
