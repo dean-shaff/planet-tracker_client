@@ -151,9 +151,9 @@ export default {
       this.currentDateTime = currentDateTime.add(days, "days").add(this.minutes, "minutes")
     },
     onDateChange(evt) {
-      console.log(`TimeDisplay.onDateChange`)
       let dateComponent = evt.target.value
       let timeComponent = this.currentTime
+      console.log(`TimeDisplay.onDateChange: ${dateComponent} ${timeComponent}`)
       this.currentDateTime = this.parseDateTime(dateComponent, timeComponent)
     },
     onMinuteChange(evt) {
@@ -165,19 +165,15 @@ export default {
     onTimeChange(evt) {
       console.log(`TimeDisplay.onTimeChange`)
       let timeComponent = evt.target.value
-      this.currentDateTime = this.parseDateTime(this.currentDate, timeComponent)
+      let dateComponent = this.currentDate
+      console.log(`TimeDisplay.onDateChange: ${dateComponent} ${timeComponent}`)
+      this.currentDateTime = this.parseDateTime(dateComponent, timeComponent)
     },
     emitChangeEvent(currentDateTime){
       this.$emit("change", currentDateTime)
     },
     parseDateTime(date, time){
-      if (date == null) {
-        date = this.currentDate
-      }
-      if (time == null) {
-        time = this.currentTime
-      }
-      var dateTime = moment(
+      let dateTime = moment(
         `${date} ${time}`,
         "YYYY/MM/DD HH:mm:ss"
       )
@@ -215,8 +211,9 @@ export default {
       return minutes
     },
     days(){
-      let days = this.currentDateTime.diff(this.initialDateTime, "days")
-      console.log(`TimeDisplay.computed.days: ${days}`)
+      let hours = this.currentDateTime.diff(this.initialDateTime, "hours")
+      let days = (hours + 1)/ 24
+      console.log(`TimeDisplay.computed.days: ${days}, ${hours}`)
       return days
     },
   },

@@ -22,6 +22,7 @@
               :width="geoLocationDisplayWidth"
               :height="geoLocationDisplayHeight"
               :key="geoLocationDisplayKey"
+              mode="osm"
               @change="onGeoLocationDisplayChange">
             </geo-location-display>
             <div class="is-divider"></div>

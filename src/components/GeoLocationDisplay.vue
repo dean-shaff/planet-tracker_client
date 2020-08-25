@@ -27,7 +27,8 @@ export default {
   props: {
     height: {type: Number, default:300},
     width: {type: Number, default:300},
-    zoom: {type: Number, default: 13}
+    zoom: {type: Number, default: 13},
+    mode: {type: String, default: "mapbox"}
   },
   mounted: function () {
     this.createMap(this.$el)
@@ -40,20 +41,23 @@ export default {
       console.log(`TileMap.createMap: lat=${lat}, lon=${lon}`)
       let map = L.map(elem).setView([lat, lon], this.zoom);
 
-      // L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-      //   maxZoom: 19,
-      //   attribution: '&copy; <a href="https://openstreetmap.org/copyright">OpenStreetMap contributors</a>'
-      // }).addTo(map);
+      if (this.mode == "osm") {
+        L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+          maxZoom: 19,
+          attribution: '&copy; <a href="https://openstreetmap.org/copyright">OpenStreetMap contributors</a>'
+        }).addTo(map);
+      } else if (this.mode == "mapbox") {
+        L.tileLayer(`https://api.mapbox.com/styles/v1/{id}/tiles/{z}/{x}/{y}?access_token=${token}`, {
+          attribution: 'Map data &copy; <a href="https://www.openstreetmap.org/">OpenStreetMap</a> contributors, <a href="https://creativecommons.org/licenses/by-sa/2.0/">CC-BY-SA</a>, Imagery © <a href="https://www.mapbox.com/">Mapbox</a>',
+          maxZoom: 18,
+          id: 'mapbox/streets-v10',
+          tileSize: 512,
+          zoomOffset: -1,
+          accessToken: token
+        }).addTo(map);        
+      }
 
-      L.tileLayer(`https://api.mapbox.com/styles/v1/{id}/tiles/{z}/{x}/{y}?access_token=${token}`, {
-        attribution: 'Map data &copy; <a href="https://www.openstreetmap.org/">OpenStreetMap</a> contributors, <a href="https://creativecommons.org/licenses/by-sa/2.0/">CC-BY-SA</a>, Imagery © <a href="https://www.mapbox.com/">Mapbox</a>',
-        maxZoom: 18,
-        id: 'mapbox/streets-v10',
-        tileSize: 512,
-        zoomOffset: -1,
-        accessToken: token
-      }).addTo(map);
-      
+
       map.on("locationfound", this.onLocationfound())
 
       let locationControl = L.control.locate({
