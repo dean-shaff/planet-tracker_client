@@ -28,7 +28,7 @@
     "d3": "^5.16.0",
     "leaflet": "^1.6.0",
     "leaflet.locatecontrol": "^0.72.0",
-    "moment": "^2.27.0",
+    "moment": "^2.29.4",
     "octicons": "^8.5.0",
     "vue": "^2.6.11",
     "webpack-merge": "^5.1.2"
