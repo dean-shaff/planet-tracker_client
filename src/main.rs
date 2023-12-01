@@ -1,6 +1,7 @@
 mod app;
 mod models;
 mod api;
+mod errors;
 
 use app::*;
 use leptos::*;

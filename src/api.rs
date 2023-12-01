@@ -1,25 +1,23 @@
+use leptos::web_sys;
+
+use crate::{models::{AstronObjectQueryParams, AstronObjectResponse}, errors::AppError};
 
 
+fn base_url() -> String {
+    web_sys::window().unwrap().location().origin().unwrap()
+}
 
-pub async fn get_astron_object_data(
-    name: &str
-    lon: f64
-    lat: f64
-    elevation: f64
-    when: NaiveDateTime
-) -> Result<AstronObjectResponse, Report>
+pub async fn get_astron_object_data(query: AstronObjectQueryParams) -> Result<AstronObjectResponse, AppError>
 {
-    let res = gloo_net::http::Request::get("get_astron_object_data")
-        .query([
-            ("name", name),
-            ("lon", lon.to_string()),
-            ("lat", lat.to_string()),
-            ("elevation", elevation.to_string()),
-            ("when", when),
-        ])
+    let url = format!("{}/get_astron_object_data", base_url());
+    let client = reqwest::Client::new();
+    let res = client.get(url)
+        .query(&query)
         .send()
-        .await?
+        .await
+        .map_err(|e| AppError::FetchError(e.to_string()))?
         .json::<AstronObjectResponse>()
-        .await?;
+        .await
+        .map_err(|e| AppError::JsonError(e.to_string()))?;
     Ok(res)
 }
