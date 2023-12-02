@@ -15,7 +15,7 @@ pub struct AstronObjectQueryParams {
 }
 
 
-#[derive(Debug, Clone, Serialize, Deserialize, Sequence)]
+#[derive(Debug, Clone, Serialize, Deserialize, Sequence, PartialEq)]
 pub enum AstronObject {
     Sun,
     Mercury,
@@ -27,6 +27,25 @@ pub enum AstronObject {
     Uranus,
     Neptune
 }
+
+impl AstronObject {
+
+    /// get rgb color associated with this planet or planet-like object
+    pub fn get_color<'a>(&self) -> &'a str {
+        match self {
+            Self::Sun => "rgb(255,204,0)",
+            Self::Mercury => "rgb(215,179,119)",
+            Self::Venus => "rgb(171,99,19)",
+            Self::Mars => "rgb(114,47,18)",
+            Self::Moon => "rgba(128,128,128)",
+            Self::Jupiter => "rgb(150,81,46)",
+            Self::Saturn => "rgb(215,179,119)",
+            Self::Uranus => "rgb(195,233,236)",
+            Self::Neptune => "rgb(71,114,255)",
+        }
+    }
+}
+
 
 impl fmt::Display for AstronObject {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {

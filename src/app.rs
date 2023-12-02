@@ -1,10 +1,12 @@
-use std::f64::consts::{PI, FRAC_PI_2, TAU};
+use std::{f64::consts::{PI, FRAC_PI_2, TAU}, cmp, thread::current};
 
 use chrono::{DateTime, Utc, Duration};
-use leptos::*;
+use leptos::{*, leptos_dom::Element};
 use leptos_meta::*;
 use enum_iterator::all;
 use futures::future::join_all;
+use wasm_bindgen::JsCast;
+use web_sys::{MouseEvent};
 
 use crate::{
     api::get_astron_object_data, 
@@ -63,7 +65,19 @@ async fn get_all_astron_object_data(position_time: (Position, DateTime<Utc>)) ->
             setting_time: when.naive_utc() + Duration::hours(2), 
             rising_time: when.naive_utc() + Duration::hours(5), 
             when: when.naive_utc()
-        }
+        },
+        // AstronObjectResponse { 
+        //     name: AstronObject::Moon, 
+        //     magnitude: 0.0, 
+        //     size: 4.0, 
+        //     az: 1.74, 
+        //     el: -1.13, 
+        //     ra: 0.0, 
+        //     dec: 0.0, 
+        //     setting_time: when.naive_utc() + Duration::hours(2), 
+        //     rising_time: when.naive_utc() + Duration::hours(5), 
+        //     when: when.naive_utc()
+        // }
     ]);
 
     res
@@ -140,7 +154,7 @@ pub fn TextDisplay(objs: Vec<AstronObjectResponse>) -> impl IntoView
 
     view! {
         
-        <div class="flex flex-col w-screen">
+        <div class="flex flex-col w-full">
             <div class="flex py-2">
                 <div class="font-semibold flex-1 pr-2">"Name"</div>
                 <div class="font-semibold flex-1 pr-2">"Cardinal Direction"</div>
@@ -159,7 +173,7 @@ pub fn TextDisplay(objs: Vec<AstronObjectResponse>) -> impl IntoView
 #[component]
 pub fn App() -> impl IntoView {
     provide_meta_context();
-
+    let (width, set_width) = create_signal(300_usize);
     let (position_time, set_position_time) = create_signal((Position {
         lon:13.4,
         lat:52.5,
@@ -187,16 +201,26 @@ pub fn App() -> impl IntoView {
         }
     };
 
+    let svg_parent: NodeRef<leptos::html::Div> = create_node_ref();
+
+    create_effect(move |_| {
+        let elem = svg_parent.get().expect("<div> to exist");
+        let width = elem.offset_width();
+        logging::log!("width={}", width);
+        if width > 0 {
+            set_width.set(cmp::min(width as usize, 500));
+        }
+    });
+
+
     let success_view = move || {
         astron_objs.and_then(|data| {
             view! {
-                <div class="flex justify-center">
-                    <div class="flex">
-                        <svg width="500" height="500">
-                            <PolarPlot radius=200 objs={data.clone()}/>
-                        </svg>
-                    </div>
+                <div _ref={svg_parent} class="flex flex-col content-center justify-center">
                     <TextDisplay objs={data.clone()}/>
+                    <div>
+                        <PolarPlot width={width.get()} height={width.get()} radius={2 * width.get() / 5} objs={data.clone()}/>
+                    </div>
                 </div>
             }
         })
@@ -219,14 +243,36 @@ pub fn App() -> impl IntoView {
 }
 
 
+#[derive(Debug, Clone)]
+struct Tooltip {
+    x: f64, 
+    y: f64,
+    obj: Option<AstronObject>,
+    visible: bool
+}
+
+impl Default for Tooltip {
+    fn default() -> Self {
+        Self {
+            x: 0.0,
+            y: 0.0,
+            obj: None,
+            visible: false
+        }
+    }
+}
+
 
 
 #[component]
 pub fn PolarPlot(
+    width: usize,
+    height: usize,
     radius: usize,
     objs: Vec<AstronObjectResponse>
 ) -> impl IntoView {
 
+    let radius_f64 = radius as f64;
     fn transform_radius(radius: f64) -> f64 {
         radius.sqrt()
     }
@@ -282,8 +328,8 @@ pub fn PolarPlot(
             let text = format!("{:.0}°", r_line);
             let transform = format!("rotate(10 {} {})", x, y);
             view! { 
-                <circle cx={center_x} cy={center_y} r={r} stroke="#1e293b" stroke-width="1" fill="none"/>
-                <text x={x} y={y} font-family="serif" font-size="10" fill="#1e293b" transform={transform}>{text}</text>
+                <circle cx={center_x} cy={center_y} r={r} stroke="#1f2937" stroke-width="1" fill="none"/>
+                <text x={x} y={y} font-family="serif" font-size="10" fill="#1f2937" transform={transform}>{text}</text>
             }
         })
         .collect::<Vec<_>>();
@@ -301,29 +347,106 @@ pub fn PolarPlot(
                 (format!("rotate({} {} {})", az_line - 270.0, x, y), (x, y))
             };
             view! {
-                <line x1=0 x2={radius} y1=0 y2=0 stroke="#1e293b" stroke-width="1" transform={transform}/>
-                <text x={x} y={y} font-family="serif" font-size="10" fill="#1e293b" transform={text_transform}>{text}</text>
+                <line x1=0 x2={radius} y1=0 y2=0 stroke="#1f2937" stroke-width="1" transform={transform}/>
+                <text x={x} y={y} font-family="serif" font-size="10" fill="#1f2937" transform={text_transform}>{text}</text>
             }  
         })
         .collect::<Vec<_>>();
-
+    
+    let (tooltip, set_tooltip) = create_signal(Tooltip::default());
 
     let obj_views = objs
-        .iter()
-        .map(|obj| {
-            let (cx, cy) = transform_az_el(obj.az, obj.el, radius as f64, center_x as f64, center_y as f64); 
+        .into_iter()
+        .map(|resp| {
+            let (cx, cy) = transform_az_el(resp.az, resp.el, radius_f64, center_x as f64, center_y as f64); 
+            let obj = resp.name.clone();
+            let fill = obj.get_color();
+            // let obj_name = obj.to_string();
+            let obj_size = resp.size;
+            // let tooltip_height = radius_f64 / 8.0;
+            // let tooltip_width = (radius_f64 / 5.0) + (obj_name.len() as f64 - 4.0) * radius_f64 / 30.0;
+            // let y_offset = radius_f64 / 8.0 + obj.size;
+            // let x_offset = tooltip_width / 2.0;
+            // let node_ref = create_node_ref();
+            let on_click = move |evt: MouseEvent| {
+                let tooltip_val = tooltip.get();
+                if let Some(current_obj) = tooltip_val.obj.clone() {
+                    if current_obj == obj {
+                        set_tooltip(Tooltip { visible: !tooltip_val.visible, ..tooltip_val});
+                        return
+                    }
+                }
+
+
+                logging::log!("x={}, y={}, offset_x={}, offset_y={} cx={}, cy={}", evt.x(), evt.y(), evt.offset_x(), evt.offset_y(), cx, cy);
+                // let html_elem = node_ref.get().expect("<circle> exists");
+                // let elem = html_elem.as_ref().get_bounding_client_rect();
+                let target = evt.target().expect("target exists");
+                let div: web_sys::Element = target.dyn_into().unwrap();
+                let rect = div.get_bounding_client_rect();
+                logging::log!("rect.x={}, rect.y={}", rect.x(), rect.y());
+                set_tooltip(Tooltip { x: rect.x() + obj_size, y: rect.y(), obj: Some(obj.clone()), visible: true })
+            };
+            
             view! {
-                <circle cx={cx} cy={cy} fill="black" r={obj.size}/>
-                <text x={cx} y={cy} font-family="serif" font-size="10" fill="#1e293b">{obj.name.to_string()}</text>
+                <circle 
+                    // node_ref={node_ref}
+                    cx={cx} 
+                    cy={cy} 
+                    fill={fill} 
+                    r={obj_size}
+                    on:click=on_click
+                />
+                // <rect 
+                //     x={cx - x_offset} 
+                //     y={cy - y_offset}
+                //     width={tooltip_width}
+                //     height={tooltip_height}
+                //     rx="5"
+                //     ry="5"
+                //     fill="#1f2937"
+                //     opacity="0.7"
+                // />
+                // <text 
+                //     x={cx - x_offset + tooltip_width / 2.0} 
+                //     y={cy - y_offset + tooltip_height / 2.0} 
+                //     font-size={tooltip_height / 2.0} 
+                //     font-family="monospace"
+                //     fill="#f8fafc" // slate-50
+                //     dominant-baseline="middle"
+                //     text-anchor="middle"
+                // >
+                //     {obj_name}
+                // </text>
             }
+            
         })
         .collect::<Vec<_>>();
 
+    let tooltip_style = move || {
+        let tooltip_val = tooltip.get();
+        logging::log!("tooltip_val={:?}", tooltip_val);
+        if tooltip_val.visible {
+            format!("position: absolute; left: {}px; top: {}px; transform: translate(-50%, -110%);", tooltip_val.x, tooltip_val.y)
+        } else {
+            "position: absolute; display: none".to_string()
+        }
+    };
 
     view! {
-        { el_circles }
-        { az_lines }
-        { obj_views }   
+        <div>
+            <svg width={width} height={height} style="display: block; margin: auto;">
+                { el_circles }
+                { az_lines }
+                { obj_views }   
+            </svg>
+            <div
+                style={tooltip_style} 
+                class="text-zinc-50 rounded-md bg-zinc-500 py-1 px-2 opacity-80" 
+            >
+                {move || tooltip.get().obj.map(|o| o.to_string()).unwrap_or("".to_string())}
+            </div>
+        </div>
     }
 }
 
