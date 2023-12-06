@@ -6,6 +6,30 @@ use enum_iterator::Sequence;
 
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct SearchQueryParams {
+    pub q: String,
+    pub max_results: i64
+}
+
+
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct SearchItem {
+    pub name: String,
+    pub lat: f64,
+    pub lon: f64,
+}
+
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct SearchResponse {
+    pub items: Vec<SearchItem>,
+}
+
+
+
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct AstronObjectQueryParams {
     pub name: AstronObject,
     pub lon: f64,

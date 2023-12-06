@@ -9,8 +9,8 @@ use wasm_bindgen::JsCast;
 use web_sys::{MouseEvent};
 
 use crate::{
-    api::get_astron_object_data, 
-    models::{AstronObjectResponse, AstronObject, AstronObjectQueryParams, CardinalDirection}, errors::AppError
+    api::{get_astron_object_data, search}, 
+    models::{AstronObjectResponse, AstronObject, AstronObjectQueryParams, CardinalDirection, SearchResponse, SearchQueryParams, SearchItem}, errors::AppError
 };
 
 
@@ -19,6 +19,18 @@ struct Position {
     lat: f64,
     lon: f64,
     elevation: f64
+}
+
+
+async fn geo_search(query: Option<String>) -> Result<Option<SearchResponse>, AppError>
+{
+    if let Some(query) = query {
+        let query = SearchQueryParams { q: query, max_results: 5 };
+        search(query).await.map(|r| Some(r))
+    } else {
+        Ok(None)
+    }
+
 }
 
 
@@ -146,7 +158,7 @@ pub fn TextDisplay(objs: Vec<AstronObjectResponse>) -> impl IntoView
                             {rising_time}
                         </div>
                     </div>
-                    { divider(idx) }
+                    // { divider(idx) }
                 }
             })
             .collect_view()
@@ -154,7 +166,7 @@ pub fn TextDisplay(objs: Vec<AstronObjectResponse>) -> impl IntoView
 
     view! {
         
-        <div class="flex flex-col w-full">
+        <div class="flex flex-col w-full divide-y divide-solid">
             <div class="flex py-2">
                 <div class="font-semibold flex-1 pr-2">"Name"</div>
                 <div class="font-semibold flex-1 pr-2">"Cardinal Direction"</div>
@@ -162,7 +174,6 @@ pub fn TextDisplay(objs: Vec<AstronObjectResponse>) -> impl IntoView
                 <div class="font-semibold flex-1 pr-2">"Setting Time"</div>
                 <div class="font-semibold flex-1">"Rising Time"</div>
             </div>
-            <Divider/>
             {rows}
         </div>
     }
@@ -216,7 +227,8 @@ pub fn App() -> impl IntoView {
     let success_view = move || {
         astron_objs.and_then(|data| {
             view! {
-                <div _ref={svg_parent} class="flex flex-col content-center justify-center">
+                <div _ref={svg_parent} class="flex flex-col content-center justify-center space-y-1">
+                    <GeoSearch/>
                     <TextDisplay objs={data.clone()}/>
                     <div>
                         <PolarPlot width={width.get()} height={width.get()} radius={2 * width.get() / 5} objs={data.clone()}/>
@@ -229,8 +241,7 @@ pub fn App() -> impl IntoView {
     view! {
         <Stylesheet id="leptos" href="/pkg/tailwind.css"/>
         <div class="my-0 mx-auto max-w-3xl">
-            <h1 class="text-4xl">"Planet Tracker"</h1>
-            <Divider/>
+            <h1 class="text-4xl my-2">"Planet Tracker"</h1>
             <Transition fallback=move || { view! {<div>"Loading..."</div>}}>
                 <ErrorBoundary fallback>
                 <div>
@@ -241,6 +252,147 @@ pub fn App() -> impl IntoView {
         </div>
     }
 }
+
+#[component]
+pub fn GeoSearch() -> impl IntoView
+{
+    let (hidden, set_hidden) = create_signal(false);
+    let (query, set_query) = create_signal::<Option<String>>(None);
+    let (geo_location, set_geo_location) = create_signal::<Option<SearchItem>>(None);
+    let search_results = create_resource(query, geo_search);
+
+    let on_change = move |evt: web_sys::Event| {
+        let value = event_target_value(&evt);
+        if value != "" {
+            set_query.set(Some(value));
+            set_hidden.set(false);
+        } else {
+            set_query.set(None);
+            set_hidden.set(true);
+        }
+    };
+
+    let success_view = move || {
+        logging::log!("success_view!");
+        search_results.and_then(|data| {
+            match data {
+                None => view! { <div>"None"</div> }.into_view(),
+                Some(data) => {
+                    let items = data.items
+                        .clone()
+                        .into_iter()
+                        .map(|i| {
+                            let name = i.name.clone();
+                            view! {
+                                <div
+                                    class="flex hover:bg-gray-200 w-full"
+                                    on:click=move |_| { 
+                                        set_geo_location.set(Some(i.clone()));
+                                        set_hidden.set(true);
+                                    }
+                                >
+                                    {name.clone()}
+                                </div>
+                            }
+                        }).collect_view();
+                    items.into_view()
+                }
+            }
+        })
+    };
+
+    view! {
+        <input type="search" placeholder="Search" on:input=on_change class="rounded-md py-1 px-2 border border-solid border-1 border-gray-300"/>
+        <Transition fallback=move || { view! {<div>"Loading..."</div>}}>
+            <ErrorBoundary fallback=move |_| { view! {<div>"Error!"</div>}}>
+                <div
+                    class:hidden={move || hidden.get()}
+                    class="flex flex-col divide-y divide-solid"
+                >
+                    { success_view }
+                </div>  
+            </ErrorBoundary>
+        </Transition>
+    }
+}
+
+
+// #[component]
+// pub fn GeoSearch() -> impl IntoView
+// {
+//     let (hide_search, set_hide_search) = create_signal(false);
+//     let (geo_location, set_geo_location) = create_signal::<Option<SearchItem>>(None);
+//     let (query, set_query) = create_signal::<Option<String>>(None);
+//     let search_results = create_resource(query, geo_search);
+
+//     create_effect(move |_| {
+//         logging::log!("hide_search={}", hide_search.get());
+//     });
+
+//     let on_change = move |evt: web_sys::Event| 
+//     {
+//         let value = event_target_value(&evt);
+//         if value != "" {
+//             set_query.set(Some(value))
+//         }
+//     };
+
+//     let fallback = move |errors: RwSignal<Errors>| {
+//         let error_strs: Vec<String> = errors
+//             .get()
+//             .iter()
+//             .map(|(_, e)| e.to_string())
+//             .collect();
+//         logging::log!("error_strs={:?}", error_strs);
+//     };
+
+//     let success_view = move || {
+//         view! {<></>}
+//         // search_results.and_then(|data| {
+//         //     logging::log!("data={:?}", data);
+//         //     match data {
+//         //         None => view! {<></>}.into_view(),
+//         //         Some(data) => {
+//         //             set_hide_search.set(false);
+//         //             let items = data.items.clone()
+//         //                 .into_iter()
+//         //                 .map(|i| {
+//         //                     let name = i.name.clone();
+//         //                     view! {
+//         //                         <div
+//         //                             class="flex hover:bg-gray-200 w-full"
+//         //                             on:click=move |_| { 
+//         //                                 set_geo_location.set(Some(i.clone()));
+//         //                                 set_hide_search.set(true)
+//         //                             }
+//         //                         >
+//         //                             {name.clone()}
+//         //                         </div>
+//         //                     }
+//         //                 }).collect_view();
+//         //             items.into_view()
+//         //         }
+//         //     }
+//         // })
+//     };
+
+
+//     view! {
+//         <></>
+//         // <input placeholder="Search" on:change=on_change class="rounded-md py-1 px-2 border border-solid border-1 border-gray-300"/>
+//         // <Transition fallback=move || view! {<div>"Loading..."</div>}>
+//         //     <ErrorBoundary fallback>
+//         //         <div
+//         //             // class:hidden={move || hide_search.get()} 
+//         //             class="flex flex-col divide-y divide-solid"
+//         //         >
+//         //             { success_view }
+//         //         </div>
+//         //     </ErrorBoundary>
+//         // </Transition>
+//     }
+// }
+
 
 
 #[derive(Debug, Clone)]
