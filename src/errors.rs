@@ -7,6 +7,7 @@ use serde::{Serialize, Deserialize};
 pub enum AppError {
     FetchError(String),
     JsonError(String),
+    DomError(String),
 }
 
 impl fmt::Display for AppError {
@@ -14,6 +15,7 @@ impl fmt::Display for AppError {
         match self {
             Self::FetchError(s) => write!(f, "{}", s),
             Self::JsonError(s) => write!(f, "{}", s),
+            Self::DomError(s) => write!(f, "{}", s),
         }
     }
 }
