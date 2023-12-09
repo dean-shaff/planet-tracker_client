@@ -1,6 +1,7 @@
 use std::f64::consts::FRAC_PI_2;
 
 use leptos::*;
+use logging::log;
 use wasm_bindgen::JsCast;
 use web_sys::MouseEvent;
 
@@ -36,6 +37,8 @@ pub fn PolarPlot(
     objs: Vec<AstronObjectResponse>
 ) -> impl IntoView {
 
+    log!("PolarPlot: width={}, height={}, radius={}", width, height, radius);
+
     let radius_f64 = radius as f64;
     fn transform_radius(radius: f64) -> f64 {
         radius.sqrt()
@@ -69,14 +72,13 @@ pub fn PolarPlot(
         (cx + center_x, cy + center_y)
     }
 
-
-    let padding = 20;
+    let padding = width / 2 - radius;
 
     let el_increment = 15;
     let el_lines: Vec<f64> = (0..90/el_increment).map(|val| (val*el_increment) as f64).collect();
     let az_increment = 30;
     let az_lines: Vec<f64> = (0..360/az_increment).map(|val| (val*az_increment) as f64).collect();
-    let (center_x, center_y) = (radius + padding, radius + padding);
+    let (center_x, center_y) = (radius + padding, radius + padding / 2);
 
     let el_circles = el_lines
         .iter()
@@ -185,13 +187,13 @@ pub fn PolarPlot(
     };
 
     view! {
-        <div>
+        <div class="content-center justify-center">
             <svg width={width} height={height} style="display: block; margin: auto;">
                 { el_circles }
                 { az_lines }
                 { obj_views }   
             </svg>
-            <div
+             <div
                 style={tooltip_style} 
                 class="text-zinc-50 rounded-md bg-zinc-500 py-1 px-2 opacity-80" 
             >

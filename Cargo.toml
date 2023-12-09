@@ -21,3 +21,4 @@ eyre = { version = "*"}
 enum-iterator = "1.4.1"
 futures = "*"
 web-sys = { version = "*", features = ["Element", "DomRect", "Navigator", "Window", "Geolocation"] }
+leptos-use = "0.9.0"

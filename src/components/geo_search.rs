@@ -39,7 +39,6 @@ pub fn GeoSearch() -> impl IntoView
     };
 
     let success_view = move || {
-        logging::log!("success_view!");
         search_results.and_then(|data| {
             match data {
                 None => {

@@ -4,6 +4,47 @@ use crate::{models::AstronObjectResponse, utils::{rad2deg, deg2cardinal}};
 
 
 #[component]
+pub fn TextDisplayRow(obj: AstronObjectResponse) -> impl IntoView 
+{
+    // let az = format!("{:.2}°", rad2deg(obj.az));
+    let az_cardinal = format!("{:#}", deg2cardinal(rad2deg(obj.az)));
+    let el = format!("{:.2}°", rad2deg(obj.el));
+    let formatter = "%H:%M";
+
+    let (setting_time, rising_time) = if obj.setting_time > obj.rising_time {
+        ("-".to_string(), obj.rising_time.format(formatter).to_string())
+    } else {
+        (obj.setting_time.format(formatter).to_string(), "-".to_string())
+    };
+
+    let magnitude = format!("{:.2}", obj.magnitude);
+    
+    view! {
+        <tr>
+            <td>
+                {obj.name.to_string()}
+            </td>
+            <td>
+                {az_cardinal}
+            </td>
+            <td>
+                {el.clone()}
+            </td>
+            <td class="hidden sm:table-cell">
+                {setting_time}
+            </td>
+            <td class="hidden sm:table-cell">
+                {rising_time}
+            </td>
+            <td class="hidden sm:table-cell">
+                {magnitude}
+            </td>
+        </tr>
+    }
+}
+
+
+#[component]
 pub fn TextDisplay(objs: Vec<AstronObjectResponse>) -> impl IntoView 
 {
 
@@ -11,35 +52,8 @@ pub fn TextDisplay(objs: Vec<AstronObjectResponse>) -> impl IntoView
         objs
             .iter()
             .map(|obj| {
-                let az = format!("{:.2}°", rad2deg(obj.az));
-                let az_cardinal = format!("{:#}", deg2cardinal(rad2deg(obj.az)));
-                let el = format!("{:.2}°", rad2deg(obj.el));
-                let formatter = "%H:%M";
-                
-                let (setting_time, rising_time) = if obj.setting_time > obj.rising_time {
-                    ("-".to_string(), obj.rising_time.format(formatter).to_string())
-                } else {
-                    (obj.setting_time.format(formatter).to_string(), "-".to_string())
-                };
-                
                 view! {
-                    <div class="flex py-2">
-                        <div class="flex-1 pr-2">
-                            {obj.name.to_string()}
-                        </div>
-                        <div class="flex-1 pr-2">
-                            {az_cardinal}
-                        </div>
-                        <div class="flex-1 pr-2">
-                            {az}/{el}
-                        </div>
-                        <div class="flex-1 pr-2">
-                            {setting_time}
-                        </div>
-                        <div class="flex-1">
-                            {rising_time}
-                        </div>
-                    </div>
+                    <TextDisplayRow obj=obj.clone()/>
                 }
             })
             .collect_view()
@@ -47,15 +61,20 @@ pub fn TextDisplay(objs: Vec<AstronObjectResponse>) -> impl IntoView
 
     view! {
         
-        <div class="flex flex-col w-full divide-y divide-solid">
-            <div class="flex py-2">
-                <div class="font-semibold flex-1 pr-2">"Name"</div>
-                <div class="font-semibold flex-1 pr-2">"Cardinal Direction"</div>
-                <div class="font-semibold flex-1 pr-2">"Azimuth/Elevation"</div>
-                <div class="font-semibold flex-1 pr-2">"Setting Time"</div>
-                <div class="font-semibold flex-1">"Rising Time"</div>
-            </div>
-            {rows}
-        </div>
+        <table class="table-auto divide-y divide-solid">
+            <thead>
+                <tr>
+                    <th class="font-semibold text-left">"Name"</th>
+                    <th class="font-semibold text-left">"Direction"</th>
+                    <th class="font-semibold text-left">"Elevation"</th>
+                    <th class="font-semibold text-left hidden sm:table-cell">"Setting Time"</th>
+                    <th class="font-semibold text-left hidden sm:table-cell">"Rising Time"</th>
+                    <th class="font-semibold text-left hidden sm:table-cell">"Apparent Magnitude"</th>
+                </tr>
+            </thead>
+            <tbody class="divide-y divide-solid">
+                {rows}
+            </tbody>
+        </table>
     }
 }

@@ -1,7 +1,8 @@
 use std::cmp;
 
 use chrono::{DateTime, Utc, Duration};
-use leptos::*;
+use leptos::{*, html::Div};
+use leptos_use::{use_element_size, UseElementSizeReturn};
 use logging::log;
 use leptos_meta::*;
 use enum_iterator::all;
@@ -83,8 +84,6 @@ async fn get_all_astron_object_data(position_time: (Position, DateTime<Utc>)) ->
 
 #[component]
 pub fn AppInner(geo_position: Position) -> impl IntoView {
-    let (width, set_width) = create_signal(500_usize);
-
     let (position_time, set_position_time) = create_signal::<(Position, DateTime<Utc>)>((geo_position, Utc::now()));
 
     provide_context(set_position_time);
@@ -109,21 +108,15 @@ pub fn AppInner(geo_position: Position) -> impl IntoView {
             </div>
         }
     };
+    let el = create_node_ref::<Div>();
 
-    let svg_parent: NodeRef<leptos::html::Div> = create_node_ref();
-
-    create_effect(move |_| {
-        if let Some(elem) = svg_parent.get() {
-            let width = elem.offset_width();
-            logging::log!("width={}", width);
-            if width > 0 {
-                set_width.set(cmp::min(width as usize, MIN_POLAR_PLOT_WIDTH));
-            }    
-        }
-    });
-
+    let UseElementSizeReturn { width, .. } = use_element_size(el);
+    
+    let w = Signal::derive(move || width.get() as usize);
+    let r = Signal::derive(move || 2 * width.get() as usize / 5);
 
     let success_view = move || {
+
         let info_text = move || {
             let (position, time) = position_time.get();
             view! {
@@ -139,16 +132,14 @@ pub fn AppInner(geo_position: Position) -> impl IntoView {
             }
         };
 
-
-
         astron_objs.and_then(|data| {
             view! {
-                <div _ref={svg_parent} class="flex flex-col content-center justify-center space-y-1">
+                <div class="flex flex-col content-center justify-center space-y-1">
                     <GeoSearch/>
                     {info_text}
                     <TextDisplay objs={data.clone()}/>
                     <div>
-                        <PolarPlot width={width.get()} height={width.get()} radius={2 * width.get() / 5} objs={data.clone()}/>
+                        <PolarPlot width={w.get()} height={w.get()} radius={r.get()} objs={data.clone()}/>
                     </div>
                 </div>
             }
@@ -160,7 +151,7 @@ pub fn AppInner(geo_position: Position) -> impl IntoView {
             <h1 class="text-4xl my-2">"Planet Tracker"</h1>
             <Transition fallback=move || { view! {<div>"Loading..."</div>}}>
                 <ErrorBoundary fallback>
-                <div>
+                <div node_ref=el>
                     { success_view }
                 </div>  
                 </ErrorBoundary>
