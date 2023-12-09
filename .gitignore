@@ -1,2 +1,10 @@
 node_modules/
 index.old.html
+
+
+# Added by cargo
+
+/target
+
+dist/
+style/
