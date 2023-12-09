@@ -140,14 +140,14 @@ pub fn AppInner(geo_position: Position) -> impl IntoView {
 
         astron_objs.and_then(|data| {
             view! {
-                <div class="flex flex-col content-center justify-center space-y-1 mx-2 sm:mx-0">
+                <>
                     <GeoSearch/>
                     {info_text}
                     <TextDisplay objs={data.clone()}/>
                     <div>
                         <PolarPlot width={width.get()} height={width.get()} radius={radius.get()} objs={data.clone()}/>
                     </div>
-                </div>
+                </>
             }
         })
     };
@@ -157,7 +157,7 @@ pub fn AppInner(geo_position: Position) -> impl IntoView {
             <h1 class="text-4xl my-2 mx-2">"Planet Tracker"</h1>
             <Transition fallback=move || { view! {<div>"Loading..."</div>}}>
                 <ErrorBoundary fallback>
-                <div node_ref=el>
+                <div node_ref=el class="flex flex-col content-center justify-center space-y-1 mx-2 sm:mx-0">
                     { success_view }
                 </div>  
                 </ErrorBoundary>
