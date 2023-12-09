@@ -1,8 +1,6 @@
-use std::cmp;
-
 use chrono::{DateTime, Utc, Duration};
 use leptos::{*, html::Div};
-use leptos_use::{use_element_size, UseElementSizeReturn};
+use leptos_use::{use_element_size, UseElementSizeReturn, use_resize_observer};
 use logging::log;
 use leptos_meta::*;
 use enum_iterator::all;
@@ -24,9 +22,7 @@ use crate::{
 };
 
 
-pub const MIN_POLAR_PLOT_WIDTH: usize = 500;
-
-
+pub const MIN_POLAR_PLOT_WIDTH: usize = 300;
 
 
 async fn get_all_astron_object_data_dummy(position_time: (Position, DateTime<Utc>)) -> Result<Vec<AstronObjectResponse>, AppError>
@@ -108,38 +104,48 @@ pub fn AppInner(geo_position: Position) -> impl IntoView {
             </div>
         }
     };
+
     let el = create_node_ref::<Div>();
 
-    let UseElementSizeReturn { width, .. } = use_element_size(el);
+    let (width, set_width) = create_signal(MIN_POLAR_PLOT_WIDTH);
+
+    use_resize_observer(el, move |entries, _| {
+        let rect = entries[0].content_rect();
+        let rect_width = rect.width() as usize;
+        if rect_width != width.get_untracked() {
+            log!("callback: width={}", rect_width);
+            set_width.set(rect_width);
+        }
+    });
+
     
-    let w = Signal::derive(move || width.get() as usize);
-    let r = Signal::derive(move || 2 * width.get() as usize / 5);
+    let radius = Signal::derive(move || 2 * width.get() / 5);
 
     let success_view = move || {
 
         let info_text = move || {
             let (position, time) = position_time.get();
             view! {
-                <div>
-                    "Showing Ephemerides for latitude and longitude "
-                    <span class="font-medium">{format!("{:.2}", position.lat)}"°N "</span>
-                    <span class="font-medium">{format!("{:.2}", position.lon)}"°E"</span>
+                <div class="border border-1 rounded-md py-1 px-2 border-gray-300">
+                    "Showing Ephemerides for "
+                    <span class="font-bold">{format!("{:.2}", position.lat)}"°N, "</span>
+                    <span class="font-bold">{format!("{:.2}", position.lon)}"°E"</span>
                     " at "
-                    <span class="font-medium">{time.format("%H:%M:%S").to_string()}</span>
+                    <span class="font-bold">{time.format("%H:%M:%S").to_string()}</span>
                     " on "
-                    <span class="font-medium">{time.format("%A, %e %B %Y").to_string()}</span>
+                    <span class="font-bold">{time.format("%A, %e %B %Y").to_string()}</span>
                 </div>
             }
         };
 
         astron_objs.and_then(|data| {
             view! {
-                <div class="flex flex-col content-center justify-center space-y-1">
+                <div class="flex flex-col content-center justify-center space-y-1 mx-2 sm:mx-0">
                     <GeoSearch/>
                     {info_text}
                     <TextDisplay objs={data.clone()}/>
                     <div>
-                        <PolarPlot width={w.get()} height={w.get()} radius={r.get()} objs={data.clone()}/>
+                        <PolarPlot width={width.get()} height={width.get()} radius={radius.get()} objs={data.clone()}/>
                     </div>
                 </div>
             }
@@ -148,7 +154,7 @@ pub fn AppInner(geo_position: Position) -> impl IntoView {
 
     view! {
         <>
-            <h1 class="text-4xl my-2">"Planet Tracker"</h1>
+            <h1 class="text-4xl my-2 mx-2">"Planet Tracker"</h1>
             <Transition fallback=move || { view! {<div>"Loading..."</div>}}>
                 <ErrorBoundary fallback>
                 <div node_ref=el>

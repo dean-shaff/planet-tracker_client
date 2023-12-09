@@ -73,6 +73,7 @@ pub fn PolarPlot(
     }
 
     let padding = width / 2 - radius;
+    log!("PolarPlot: padding={}", padding);
 
     let el_increment = 15;
     let el_lines: Vec<f64> = (0..90/el_increment).map(|val| (val*el_increment) as f64).collect();
@@ -109,7 +110,17 @@ pub fn PolarPlot(
                 let (x, y) = transform_az_r_rel((az_line + 1.0).to_radians(), 1.01, radius as f64, center_x as f64, center_y as f64);
                 (format!("rotate({} {} {})", az_line - 90.0, x, y), (x, y))
             } else {
-                let (x, y) = transform_az_r_rel((az_line - 1.0).to_radians(), 1.1, radius as f64, center_x as f64, center_y as f64);
+                let transform = |width: f64| -> f64 
+                {
+                    let (x0, y0) = (360.0, 1.14);
+                    let (x1, y1) = (768.0, 1.07);
+                    let x_diff = x1 - x0;
+                    let y_diff = y1 - y0;
+                    let m = y_diff / x_diff;
+                    let b = (x1*y0 - x0*y1) / x_diff;
+                    width * m + b
+                };
+                let (x, y) = transform_az_r_rel((az_line - 1.0).to_radians(), transform(width as f64), radius as f64, center_x as f64, center_y as f64);
                 (format!("rotate({} {} {})", az_line - 270.0, x, y), (x, y))
             };
             view! {
