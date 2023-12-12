@@ -15,7 +15,7 @@ use crate::{
     }, 
     errors::AppError, 
     components::{
-        GeoSearch,
+        GeoDateTimeSearch,
         TextDisplay, 
         PolarPlot
     }
@@ -25,37 +25,37 @@ use crate::{
 pub const MIN_POLAR_PLOT_WIDTH: usize = 300;
 
 
-async fn get_all_astron_object_data_dummy(position_time: (Position, DateTime<Utc>)) -> Result<Vec<AstronObjectResponse>, AppError>
-{
-    let (_, when) = position_time;
-    let res = Ok(vec![
-        AstronObjectResponse { 
-            name: AstronObject::Jupiter, 
-            magnitude: 0.0, 
-            size: 10.0, 
-            az: 5.06, 
-            el: 0.34, 
-            ra: 0.0, 
-            dec: 0.0, 
-            setting_time: when.naive_utc() + Duration::hours(2), 
-            rising_time: when.naive_utc() + Duration::hours(5), 
-            when: when.naive_utc()
-        },
-        AstronObjectResponse { 
-            name: AstronObject::Mars, 
-            magnitude: 0.0, 
-            size: 4.0, 
-            az: 1.74, 
-            el: 1.13, 
-            ra: 0.0, 
-            dec: 0.0, 
-            setting_time: when.naive_utc() + Duration::hours(2), 
-            rising_time: when.naive_utc() + Duration::hours(5), 
-            when: when.naive_utc()
-        },
-    ]);
-    res
-}
+// async fn get_all_astron_object_data_dummy(position_time: (Position, DateTime<Utc>)) -> Result<Vec<AstronObjectResponse>, AppError>
+// {
+//     let (_, when) = position_time;
+//     let res = Ok(vec![
+//         AstronObjectResponse { 
+//             name: AstronObject::Jupiter, 
+//             magnitude: 0.0, 
+//             size: 10.0, 
+//             az: 5.06, 
+//             el: 0.34, 
+//             ra: 0.0, 
+//             dec: 0.0, 
+//             setting_time: when.naive_utc() + Duration::hours(2), 
+//             rising_time: when.naive_utc() + Duration::hours(5), 
+//             when: when.naive_utc()
+//         },
+//         AstronObjectResponse { 
+//             name: AstronObject::Mars, 
+//             magnitude: 0.0, 
+//             size: 4.0, 
+//             az: 1.74, 
+//             el: 1.13, 
+//             ra: 0.0, 
+//             dec: 0.0, 
+//             setting_time: when.naive_utc() + Duration::hours(2), 
+//             rising_time: when.naive_utc() + Duration::hours(5), 
+//             when: when.naive_utc()
+//         },
+//     ]);
+//     res
+// }
 
 async fn get_all_astron_object_data(position_time: (Position, DateTime<Utc>)) -> Result<Vec<AstronObjectResponse>, AppError>
 {
@@ -80,11 +80,11 @@ async fn get_all_astron_object_data(position_time: (Position, DateTime<Utc>)) ->
 
 #[component]
 pub fn AppInner(geo_position: Position) -> impl IntoView {
-    let (position_time, set_position_time) = create_signal::<(Position, DateTime<Utc>)>((geo_position, Utc::now()));
+    let position_time_rw = create_rw_signal::<(Position, DateTime<Utc>)>((geo_position, Utc::now()));
 
-    provide_context(set_position_time);
+    provide_context(position_time_rw);
     
-    let astron_objs = create_resource(position_time, get_all_astron_object_data);
+    let astron_objs = create_resource(position_time_rw, get_all_astron_object_data);
 
     let fallback = move |errors: RwSignal<Errors>| {
         logging::log!("error fallback");
@@ -123,26 +123,11 @@ pub fn AppInner(geo_position: Position) -> impl IntoView {
 
     let success_view = move || {
 
-        let info_text = move || {
-            let (position, time) = position_time.get();
-            view! {
-                <div class="border border-1 rounded-md py-1 px-2 border-gray-300">
-                    "Showing Ephemerides for "
-                    <span class="font-bold">{format!("{:.2}", position.lat)}"°N, "</span>
-                    <span class="font-bold">{format!("{:.2}", position.lon)}"°E"</span>
-                    " at "
-                    <span class="font-bold">{time.format("%H:%M:%S").to_string()}</span>
-                    " on "
-                    <span class="font-bold">{time.format("%A, %e %B %Y").to_string()}</span>
-                </div>
-            }
-        };
-
+       
         astron_objs.and_then(|data| {
             view! {
                 <>
-                    <GeoSearch/>
-                    {info_text}
+                    <GeoDateTimeSearch/>
                     <TextDisplay objs={data.clone()}/>
                     <div>
                         <PolarPlot width={width.get()} height={width.get()} radius={radius.get()} objs={data.clone()}/>

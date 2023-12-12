@@ -1,6 +1,9 @@
+use chrono::{Utc, TimeZone, Local, DateTime};
 use leptos::*;
 
 use crate::{models::AstronObjectResponse, utils::{rad2deg, deg2cardinal}};
+
+
 
 
 #[component]
@@ -12,9 +15,11 @@ pub fn TextDisplayRow(obj: AstronObjectResponse) -> impl IntoView
     let formatter = "%H:%M";
 
     let (setting_time, rising_time) = if obj.setting_time > obj.rising_time {
-        ("-".to_string(), obj.rising_time.format(formatter).to_string())
+        let rising_time_local: DateTime<Local> = Utc.from_local_datetime(&obj.rising_time).unwrap().into();
+        ("-".to_string(), rising_time_local.format(formatter).to_string())
     } else {
-        (obj.setting_time.format(formatter).to_string(), "-".to_string())
+        let setting_time_local: DateTime<Local> = Utc.from_local_datetime(&obj.setting_time).unwrap().into();
+        (setting_time_local.format(formatter).to_string(), "-".to_string())
     };
 
     let magnitude = format!("{:.2}", obj.magnitude);
