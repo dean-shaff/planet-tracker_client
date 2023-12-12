@@ -127,7 +127,7 @@ pub fn AppInner(geo_position: Position) -> impl IntoView {
         astron_objs.and_then(|data| {
             view! {
                 <>
-                    <GeoDateTimeSearch/>
+                    <GeoDateTimeSearch objs={data.clone()}/>
                     <TextDisplay objs={data.clone()}/>
                     <div>
                         <PolarPlot width={width.get()} height={width.get()} radius={radius.get()} objs={data.clone()}/>

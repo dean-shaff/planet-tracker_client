@@ -4,8 +4,6 @@ use leptos::*;
 use crate::{models::AstronObjectResponse, utils::{rad2deg, deg2cardinal}};
 
 
-
-
 #[component]
 pub fn TextDisplayRow(obj: AstronObjectResponse) -> impl IntoView 
 {
