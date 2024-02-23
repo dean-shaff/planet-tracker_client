@@ -5,3 +5,4 @@ command_arguments = ["-c", "tailwindcss -i input.css -o style/output.css"]
 
 [tools]
 wasm_bindgen = "0.2.89"
+wasm_opt = "version_108"
