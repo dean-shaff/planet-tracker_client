@@ -1,9 +1,7 @@
-use std::slice::RSplit;
-
 use chrono::{DateTime, Utc, Local, TimeZone};
 use leptos::*;
 
-use crate::{models::{SearchItem, SearchResponse, SearchQueryParams, Position, AstronObjectResponse, AstronObject}, errors::AppError, api::search};
+use crate::{api::search, errors::AppError, models::{AstronObject, AstronObjectResponse, Position, SearchQueryParams, SearchResponse}, AstronObjectsRw};
 
 async fn geo_search(query: Option<String>) -> Result<Option<SearchResponse>, AppError>
 {
@@ -110,7 +108,7 @@ pub fn DateTimeSearch(sun: AstronObjectResponse) -> impl IntoView
     let setting_time = Utc.from_local_datetime(&sun.setting_time).unwrap();
     let rising_time = Utc.from_local_datetime(&sun.rising_time).unwrap();
 
-    logging::log!("when={:?}, now={:?}, setting_time={:?}, rising_time={:?}", when, now, setting_time, rising_time);
+    // logging::log!("when={:?}, now={:?}, setting_time={:?}, rising_time={:?}", when, now, setting_time, rising_time);
 
     let on_click_factory = move |dt: DateTime<Utc>| {
         move |_evt: web_sys::MouseEvent| {
@@ -162,13 +160,20 @@ pub fn DateTimeSearch(sun: AstronObjectResponse) -> impl IntoView
 
 
 #[component]
-pub fn GeoDateTimeSearch(objs: Vec<AstronObjectResponse>) -> impl IntoView
+pub fn GeoDateTimeSearch(objs: AstronObjectsRw) -> impl IntoView
 {
-    let sun = objs
-        .iter()
-        .find(|obj| obj.name == AstronObject::Sun)
-        .unwrap()
-        .clone();
+    let date_time_search_view = move || {
+        let sun = objs
+            .get()
+            .iter()
+            .find(|obj| obj.name == AstronObject::Sun)
+            .unwrap()
+            .clone();
+        view! {
+            <DateTimeSearch sun=sun/>
+        }
+    };
+
     let position_time_rw = use_context::<RwSignal<(Position, DateTime<Utc>)>>().unwrap();
     let text_display = move || {
         
@@ -189,7 +194,7 @@ pub fn GeoDateTimeSearch(objs: Vec<AstronObjectResponse>) -> impl IntoView
         <div class="flex flex-col space-y-2 sm:flex sm:flex-row sm:space-x-2">
             <div class="sm:flex-1">
                 <GeoSearch/>
-                <DateTimeSearch sun=sun/>
+                {date_time_search_view}
             </div>
             <div class="sm:flex-1">
                 {text_display}
