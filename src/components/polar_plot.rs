@@ -131,13 +131,20 @@ pub fn AstronObjectView(
         let obj = obj.get();
         let (cx, cy) = transform_az_el(obj.az, obj.el, radius, center_x, center_y);
         let astron_obj = obj.name.clone();
-        let fill = astron_obj.get_color();
+
+        let (fill, opacity) = if obj.el > 0.0 {
+            (astron_obj.get_color(), "1.0")
+        } else {
+            ("rgba(180, 180, 180)", "0.4")
+        };
+
         view! {
             <circle
                 node_ref={node_ref}
                 cx={cx}
                 cy={cy}
                 fill={fill}
+                opacity={opacity}
                 r={obj_size}
                 on:click=on_click
             />
