@@ -1,13 +1,12 @@
 use std::fmt;
 
-use leptos::*;
-use serde::{Serialize, Deserialize};
 use chrono::NaiveDateTime;
 use enum_iterator::Sequence;
+use leptos::*;
+use serde::{Deserialize, Serialize};
 use wasm_bindgen::prelude::*;
 
 use crate::errors::AppError;
-
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct SearchQueryParams {
@@ -15,8 +14,6 @@ pub struct SearchQueryParams {
     pub max_results: i64,
     pub fuzzy: f64,
 }
-
-
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct SearchItem {
@@ -27,12 +24,11 @@ pub struct SearchItem {
     pub lon: f64,
 }
 
-
 #[derive(Debug, PartialEq, Clone)]
 pub struct Position {
     pub lat: f64,
     pub lon: f64,
-    pub elevation: f64
+    pub elevation: f64,
 }
 
 impl From<SearchItem> for Position {
@@ -40,11 +36,10 @@ impl From<SearchItem> for Position {
         Self {
             lat: value.lat,
             lon: value.lon,
-            elevation: 0.0 
+            elevation: 0.0,
         }
     }
 }
-
 
 #[wasm_bindgen]
 extern "C" {
@@ -62,61 +57,53 @@ extern "C" {
     fn coords(this: &GeolocationPosition) -> GeolocationCoordinates;
 }
 
-fn geo_callback(position: JsValue) -> GeolocationCoordinates 
-{
+fn geo_callback(position: JsValue) -> GeolocationCoordinates {
     let pos = JsCast::unchecked_into::<GeolocationPosition>(position);
     let coords = pos.coords();
     coords
 }
 
-impl From<&GeolocationCoordinates> for Position 
-{
-    fn from(value: &GeolocationCoordinates) -> Position 
-    {
-        Position {lon: value.longitude(), lat: value.latitude(), elevation: 0.0}
+impl From<&GeolocationCoordinates> for Position {
+    fn from(value: &GeolocationCoordinates) -> Position {
+        Position {
+            lon: value.longitude(),
+            lat: value.latitude(),
+            elevation: 0.0,
+        }
     }
 }
 
-
 impl Position {
-    pub fn from_browser() -> Result<ReadSignal<Option<Self>>, AppError>
-    {
-        let window = web_sys::window()
-            .ok_or(AppError::DomError("Couldn't get the window!".to_string()))?;
+    pub fn from_browser() -> Result<ReadSignal<Option<Self>>, AppError> {
+        let window =
+            web_sys::window().ok_or(AppError::DomError("Couldn't get the window!".to_string()))?;
         let navigator = window.navigator();
-        let geolocation = navigator.geolocation()
+        let geolocation = navigator
+            .geolocation()
             .map_err(|_err| AppError::DomError("Couldn't get geolocation".to_string()))?;
 
         let (coords, set_coords) = create_signal::<Option<Self>>(None);
         create_effect(move |_| {
-            let geo_callback_function =
-                Closure::wrap(Box::new(move |pos| {
-                    let geo_coords = geo_callback(pos);
-                    set_coords.set(Some(Position::from(&geo_coords)));
-                }) as Box<dyn Fn(JsValue)>);
+            let geo_callback_function = Closure::wrap(Box::new(move |pos| {
+                let geo_coords = geo_callback(pos);
+                set_coords.set(Some(Position::from(&geo_coords)));
+            }) as Box<dyn Fn(JsValue)>);
             geolocation
                 .get_current_position(&geo_callback_function.as_ref().unchecked_ref())
                 .expect("Unable to get position");
             // geolocation
             //     .watch_position(&geo_callback_function.as_ref().unchecked_ref())
             //     .expect("Unable to get position");
-            geo_callback_function.forget();    
+            geo_callback_function.forget();
         });
         Ok(coords)
     }
 }
 
-
-
-
-
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct SearchResponse {
     pub items: Vec<SearchItem>,
 }
-
-
-
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct AstronObjectQueryParams {
@@ -127,8 +114,7 @@ pub struct AstronObjectQueryParams {
     pub when: NaiveDateTime,
 }
 
-
-#[derive(Debug, Clone, Serialize, Deserialize, Sequence, PartialEq)]
+#[derive(Debug, Clone, Serialize, Deserialize, Sequence, PartialEq, Eq, Hash)]
 pub enum AstronObject {
     Sun,
     Mercury,
@@ -142,7 +128,6 @@ pub enum AstronObject {
 }
 
 impl AstronObject {
-
     /// get rgb color associated with this planet or planet-like object
     pub fn get_color<'a>(&self) -> &'a str {
         match self {
@@ -158,7 +143,6 @@ impl AstronObject {
         }
     }
 }
-
 
 impl fmt::Display for AstronObject {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
@@ -176,7 +160,6 @@ impl fmt::Display for AstronObject {
     }
 }
 
-
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct AstronObjectResponse {
     pub name: AstronObject,
@@ -191,6 +174,11 @@ pub struct AstronObjectResponse {
     pub when: NaiveDateTime,
 }
 
+#[derive(Debug, Clone)]
+pub struct SelectedAstronObjectResponse {
+    pub selected: bool,
+    pub obj: AstronObjectResponse,
+}
 
 #[derive(Debug)]
 pub enum CardinalDirection {
@@ -201,7 +189,7 @@ pub enum CardinalDirection {
     South,
     SouthWest,
     West,
-    NorthWest
+    NorthWest,
 }
 
 impl fmt::Display for CardinalDirection {
@@ -232,7 +220,6 @@ impl fmt::Display for CardinalDirection {
     }
 }
 
-
 impl From<u8> for CardinalDirection {
     fn from(value: u8) -> Self {
         match value {
@@ -244,7 +231,7 @@ impl From<u8> for CardinalDirection {
             6 => Self::SouthWest,
             7 => Self::West,
             8 => Self::NorthWest,
-            _ => panic!("Can't match value greater than 7!")
+            _ => panic!("Can't match value greater than 7!"),
         }
     }
 }
