@@ -12,11 +12,10 @@ use crate::{
 };
 
 #[derive(Debug, Clone)]
-struct Tooltip {
+pub struct Tooltip {
     x: f64,
     y: f64,
     obj: Option<AstronObject>,
-    visible: bool,
 }
 
 impl Default for Tooltip {
@@ -25,7 +24,6 @@ impl Default for Tooltip {
             x: 0.0,
             y: 0.0,
             obj: None,
-            visible: false,
         }
     }
 }
@@ -58,56 +56,21 @@ fn transform_az_r_rel(
 
 #[component]
 pub fn AstronObjectView(
+    radius: f64,
+    width: f64,
+    center_x: f64,
+    center_y: f64,
     obj: AstronObjectResponse,
     selected: SelectedRw,
     tooltip: TooltipRw,
 ) -> impl IntoView {
-    let (cx, cy) = transform_az_el(
-        resp.az,
-        resp.el,
-        radius_f64,
-        center_x as f64,
-        center_y as f64,
-    );
-    let obj = resp.name.clone();
-    let fill = obj.get_color();
+    let (obj, _) = create_signal(obj);
     let scale_factor = 1.5 * width as f64 / MIN_POLAR_PLOT_WIDTH as f64;
-    let obj_size = 2.0 + scale_factor * (resp.size + 1.0).ln();
-    // logging::log!("scale_factor={}, obj={}, obj_size={}", scale_factor, obj, obj_size);
+    let obj_size = move || 2.0 + scale_factor * (obj.get().size + 1.0).ln();
 
-    let on_click = move |evt: MouseEvent| {
-        let tooltip_val = tooltip.get();
-        if let Some(current_obj) = tooltip_val.obj.clone() {
-            if current_obj == obj {
-                tooltip.set(Tooltip {
-                    visible: !tooltip_val.visible,
-                    ..tooltip_val
-                });
-                objs.update(|objs| {
-                    log!("obj={}, current_obj={}", obj, current_obj);
-                    for elem in objs {
-                        if elem.obj.name == current_obj {
-                            log!("here");
-                            elem.selected = !tooltip_val.visible;
-                        }
-                    }
-                });
-                return;
-            }
-        }
-        logging::log!(
-            "x={}, y={}, offset_x={}, offset_y={} cx={}, cy={}",
-            evt.x(),
-            evt.y(),
-            evt.offset_x(),
-            evt.offset_y(),
-            cx,
-            cy
-        );
-        let target = evt.target().expect("target exists");
-        let div: web_sys::Element = target.dyn_into().unwrap();
-        let rect = div.get_bounding_client_rect();
+    let node_ref = create_node_ref::<leptos::svg::Circle>();
 
+    let get_scroll = || -> (f64, f64) {
         let doc = web_sys::window().unwrap().document().unwrap();
         let body = doc.body().unwrap();
         let doc_elem = doc.document_element().unwrap();
@@ -115,6 +78,30 @@ pub fn AstronObjectView(
             body.scroll_left() + doc_elem.scroll_left(),
             body.scroll_top() + doc_elem.scroll_top(),
         );
+        (scroll_x as f64, scroll_y as f64)
+    };
+
+    create_effect(move |_| {
+        if let (Some(circle), Some(current_selected)) = (node_ref.get(), selected.get()) {
+            let obj = obj.get();
+            if current_selected != obj.name {
+                return;
+            }
+            let rect = circle.get_bounding_client_rect();
+            let (scroll_x, scroll_y) = get_scroll();
+            tooltip.set(Tooltip {
+                x: rect.x() + obj_size() + scroll_x as f64,
+                y: rect.y() + scroll_y as f64,
+                obj: Some(obj.name.clone()),
+            });
+        };
+    });
+
+    let on_click = move |_| {
+        let obj = obj.get();
+        let circle = node_ref.get().expect("circle exists").clone();
+        let rect = circle.get_bounding_client_rect();
+        let (scroll_x, scroll_y) = get_scroll();
 
         logging::log!(
             "rect.x={}, rect.y={}, scroll_x={}, scroll_y={}",
@@ -124,22 +111,39 @@ pub fn AstronObjectView(
             scroll_y
         );
         tooltip.set(Tooltip {
-            x: rect.x() + obj_size + scroll_x as f64,
+            x: rect.x() + obj_size() + scroll_x as f64,
             y: rect.y() + scroll_y as f64,
-            obj: Some(obj.clone()),
-            visible: true,
+            obj: Some(obj.name.clone()),
         });
+
+        if let Some(current_selected) = selected.get() {
+            if current_selected != obj.name {
+                selected.set(Some(obj.name.clone()));
+            } else {
+                selected.set(None);
+            }
+        } else {
+            selected.set(Some(obj.name.clone()));
+        }
     };
 
-    view! {
-        <circle
-            cx={cx}
-            cy={cy}
-            fill={fill}
-            r={obj_size}
-            on:click=on_click
-        />
-    }
+    let circle_view = move || {
+        let obj = obj.get();
+        let (cx, cy) = transform_az_el(obj.az, obj.el, radius, center_x, center_y);
+        let astron_obj = obj.name.clone();
+        let fill = astron_obj.get_color();
+        view! {
+            <circle
+                node_ref={node_ref}
+                cx={cx}
+                cy={cy}
+                fill={fill}
+                r={obj_size}
+                on:click=on_click
+            />
+        }
+    };
+    view! { {circle_view} }
 }
 
 #[component]
@@ -156,8 +160,6 @@ pub fn PolarPlot(
         height,
         radius
     );
-
-    let radius_f64 = radius as f64;
 
     let padding = width / 2 - radius;
     log!("PolarPlot: padding={}", padding);
@@ -223,96 +225,9 @@ pub fn PolarPlot(
 
     let tooltip = create_rw_signal(Tooltip::default());
 
-    // let obj_views = move || {
-    //     objs.get()
-    //         .into_iter()
-    //         .map(|resp| {
-    //             let (cx, cy) = transform_az_el(
-    //                 resp.az,
-    //                 resp.el,
-    //                 radius_f64,
-    //                 center_x as f64,
-    //                 center_y as f64,
-    //             );
-    //             let obj = resp.name.clone();
-    //             let fill = obj.get_color();
-    //             let scale_factor = 1.5 * width as f64 / MIN_POLAR_PLOT_WIDTH as f64;
-    //             let obj_size = 2.0 + scale_factor * (resp.size + 1.0).ln();
-    //             // logging::log!("scale_factor={}, obj={}, obj_size={}", scale_factor, obj, obj_size);
-
-    //             let on_click = move |evt: MouseEvent| {
-    //                 let tooltip_val = tooltip.get();
-    //                 if let Some(current_obj) = tooltip_val.obj.clone() {
-    //                     if current_obj == obj {
-    //                         tooltip.set(Tooltip {
-    //                             visible: !tooltip_val.visible,
-    //                             ..tooltip_val
-    //                         });
-    //                         objs.update(|objs| {
-    //                             log!("obj={}, current_obj={}", obj, current_obj);
-    //                             for elem in objs {
-    //                                 if elem.obj.name == current_obj {
-    //                                     log!("here");
-    //                                     elem.selected = !tooltip_val.visible;
-    //                                 }
-    //                             }
-    //                         });
-    //                         return;
-    //                     }
-    //                 }
-    //                 logging::log!(
-    //                     "x={}, y={}, offset_x={}, offset_y={} cx={}, cy={}",
-    //                     evt.x(),
-    //                     evt.y(),
-    //                     evt.offset_x(),
-    //                     evt.offset_y(),
-    //                     cx,
-    //                     cy
-    //                 );
-    //                 let target = evt.target().expect("target exists");
-    //                 let div: web_sys::Element = target.dyn_into().unwrap();
-    //                 let rect = div.get_bounding_client_rect();
-
-    //                 let doc = web_sys::window().unwrap().document().unwrap();
-    //                 let body = doc.body().unwrap();
-    //                 let doc_elem = doc.document_element().unwrap();
-    //                 let (scroll_x, scroll_y) = (
-    //                     body.scroll_left() + doc_elem.scroll_left(),
-    //                     body.scroll_top() + doc_elem.scroll_top(),
-    //                 );
-
-    //                 logging::log!(
-    //                     "rect.x={}, rect.y={}, scroll_x={}, scroll_y={}",
-    //                     rect.x(),
-    //                     rect.y(),
-    //                     scroll_x,
-    //                     scroll_y
-    //                 );
-    //                 tooltip.set(Tooltip {
-    //                     x: rect.x() + obj_size + scroll_x as f64,
-    //                     y: rect.y() + scroll_y as f64,
-    //                     obj: Some(obj.clone()),
-    //                     visible: true,
-    //                 });
-    //             };
-
-    //             view! {
-    //                 <circle
-    //                     cx={cx}
-    //                     cy={cy}
-    //                     fill={fill}
-    //                     r={obj_size}
-    //                     on:click=on_click
-    //                 />
-    //             }
-    //         })
-    //         .collect::<Vec<_>>()
-    // };
-
     let tooltip_style = move || {
         let tooltip_val = tooltip.get();
-        logging::log!("tooltip_val={:?}", tooltip_val);
-        if tooltip_val.visible {
+        if let Some(current_selected) = selected.get() {
             format!(
                 "position: absolute; left: {}px; top: {}px; transform: translate(-50%, -110%);",
                 tooltip_val.x, tooltip_val.y
@@ -337,7 +252,15 @@ pub fn PolarPlot(
                     key=|obj| obj.name.clone()
                     children=move |obj: AstronObjectResponse| {
                         view! {
-                            <AstronObjectView obj=obj selected=selected tooltip=tooltip/>
+                            <AstronObjectView
+                                obj=obj
+                                selected=selected
+                                tooltip=tooltip
+                                radius={radius as f64}
+                                center_x={center_x as f64}
+                                center_y={center_y as f64}
+                                width={width as f64}
+                            />
                         }
                     }
                 />

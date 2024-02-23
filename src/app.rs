@@ -140,21 +140,6 @@ pub fn AppInner(geo_position: Position) -> impl IntoView {
         }
     };
 
-    let el = create_node_ref::<Div>();
-
-    let (width, set_width) = create_signal(MIN_POLAR_PLOT_WIDTH);
-
-    use_resize_observer(el, move |entries, _| {
-        let rect = entries[0].content_rect();
-        let rect_width = rect.width() as usize;
-        if rect_width != width.get_untracked() {
-            log!("callback: width={}", rect_width);
-            set_width.set(rect_width);
-        }
-    });
-
-    let radius = Signal::derive(move || 2 * width.get() / 5);
-
     let success_view = move || {
         astron_objs.and_then(|data| {
             view! {
@@ -170,9 +155,7 @@ pub fn AppInner(geo_position: Position) -> impl IntoView {
             <h1 class="text-4xl my-2 mx-2">"Planet Tracker"</h1>
             <Transition fallback=move || { view! {<div>"Loading..."</div>}}>
                 <ErrorBoundary fallback>
-                    <div node_ref=el class="flex flex-col content-center justify-center space-y-1 mx-2 sm:mx-0">
-                        { success_view }
-                    </div>
+                    { success_view }
                 </ErrorBoundary>
             </Transition>
         </>

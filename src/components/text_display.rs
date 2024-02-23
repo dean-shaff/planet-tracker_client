@@ -1,12 +1,10 @@
-use std::collections::HashMap;
-
 use crate::{
-    models::{AstronObject, AstronObjectResponse, SelectedAstronObjectResponse},
+    models::AstronObjectResponse,
     utils::{deg2cardinal, rad2deg},
     AstronObjectsRw, SelectedRw,
 };
 use chrono::{DateTime, Local, TimeZone, Utc};
-use leptos::logging::log;
+
 use leptos::*;
 
 #[component]
@@ -56,7 +54,15 @@ pub fn TextDisplayRow(obj: AstronObjectResponse, selected: SelectedRw) -> impl I
     let magnitude = move || format!("{:.2}", obj.get().magnitude);
     let handle_click = move |_| {
         let obj = obj.get();
-        selected.set(Some(obj.name));
+        if let Some(current_selected) = selected.get() {
+            if current_selected != obj.name {
+                selected.set(Some(obj.name.clone()));
+            } else {
+                selected.set(None);
+            }
+        } else {
+            selected.set(Some(obj.name.clone()));
+        }
     };
 
     view! {
